@@ -5,36 +5,36 @@ class ImageParser {
                 throw new Error('请上传图片文件');
             }
 
-            const tags = await ExifReader.load(file);
-            console.log('解析到的标签:', tags);
+            const exif = await ExifReader.load(file);
+            console.log('解析到的EXIF:', exif);
 
             // 获取图片分辨率
             const dimensions = await this.getImageDimensions(file);
 
             // 检测生成工具类型
-            const generator = this.detectGenerator(tags);
+            const generator = this.detectGenerator(exif);
             console.log('检测到的生成器:', generator);
 
             // 根据不同工具解析元数据
             let metadata;
             switch (generator) {
                 case 'NovelAI':
-                    metadata = this.parseNovelAI(tags);
+                    metadata = this.parseNovelAI(exif);
                     break;
                 case 'ComfyUI':
-                    metadata = this.parseComfyUI(tags);
+                    metadata = this.parseComfyUI(exif);
                     break;
                 case 'Stable Diffusion':
-                    metadata = this.parseStableDiffusion(tags);
+                    metadata = this.parseStableDiffusion(exif);
                     break;
                 default:
-                    metadata = this.parseGeneric(tags);
+                    metadata = this.parseGeneric(exif);
             }
 
             // 将完整的原始标签数据添加到返回结果中
             const rawMetadata = {};
             // 转换ExifReader标签为普通对象
-            for (const [key, value] of Object.entries(tags)) {
+            for (const [key, value] of Object.entries(exif)) {
                 if (value && typeof value === 'object') {
                     rawMetadata[key] = {
                         description: value.description,
@@ -134,21 +134,47 @@ class ImageParser {
     }
 
     // 修改 parseComfyUI 方法以保存完整 workflow
-    parseComfyUI(tags) {
-        // ComfyUI 通常在 Comment 中存储工作流信息
-        const workflow = tags.Comment?.description || '';
+    parseComfyUI(exif) {
         
         try {
-            const data = JSON.parse(tags.prompt?.description || '{}');
+            const prompts = this.parseComfyUIPrompts(exif);
+            const workflowData = JSON.parse(exif.workflow?.description || '{}');
+            const workflow = this.parseComfyUIWorkflow(workflowData || '{}');
+            return prompts;
+        } catch {
+            return this.parseGeneric(exif);
+        }
+    }
+
+
+    parseComfyUIPrompts(exif) {
+        
+        try {
+            const data = JSON.parse(exif.prompt?.description || '{}');
+            console.log('解析到的ComfyUI提示:', data);
             return {
-                model: data.model || 'Unknown',
-                positivePrompt: data.prompt || '',
-                negativePrompt: data.negative_prompt || '',
-                parameters: data.parameters || {},
-                workflow: workflow // 保存完整的 workflow 数据
+                model: data["1"]?.inputs?.ckpt_name || 'Unknown',
+                cfg: data["61"]?.inputs?.cfg || '',
+                steps: data["61"]?.inputs?.steps || '',
+                seed: data["61"]?.inputs?.seed || '',
+                sampler: data["61"]?.inputs?.sampler_name || '',
+                scheduler: data["61"]?.inputs?.scheduler || '',
+                positivePrompt: data["39"]?.inputs?.text || '',
+                negativePrompt: data["25"]?.inputs?.text || '',
             };
         } catch {
-            return this.parseGeneric(tags);
+            return '{}';
+        }
+    }
+
+
+    parseComfyUIWorkflow(workflowDescription) {
+        
+        try {
+            const data = JSON.parse(workflowDescription.description || '{}');
+            return data;
+        } catch {
+            return '{}';
         }
     }
 

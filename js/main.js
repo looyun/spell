@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = document.getElementById('fileInput');
     const result = document.getElementById('result');
     const metadata = document.getElementById('metadata');
-    const copyBtn = document.getElementById('copyBtn');
     const parser = new ImageParser();
 
     // 拖拽处理
@@ -39,14 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) {
             await processImage(file);
         }
-    });
-
-    // 复制功能
-    copyBtn.addEventListener('click', () => {
-        const text = metadata.textContent;
-        navigator.clipboard.writeText(text)
-            .then(() => alert('信息已复制到剪贴板！'))
-            .catch(err => console.error('复制失败:', err));
     });
 
     // 添加全局拖拽支持
@@ -105,6 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const metadataDiv = document.getElementById('metadata');
         metadataDiv.innerHTML = '';
 
+        // 添加生成器信息
+        const generatorEl = document.createElement('div');
+        generatorEl.innerHTML = `
+            <div class="font-medium text-gray-700">生成器</div>
+            <div class="text-gray-600">${metadata.generator}</div>
+        `;
+        metadataDiv.appendChild(generatorEl);
+
         // 添加分辨率信息
         if (metadata.dimensions) {
             const dimensionsEl = document.createElement('div');
@@ -115,30 +114,48 @@ document.addEventListener('DOMContentLoaded', () => {
             metadataDiv.appendChild(dimensionsEl);
         }
 
-        // 添加生成器信息
-        const generatorEl = document.createElement('div');
-        generatorEl.innerHTML = `
-            <div class="font-medium text-gray-700">生成器</div>
-            <div class="text-gray-600">${metadata.generator}</div>
-        `;
-        metadataDiv.appendChild(generatorEl);
+        // 添加参数信息
+        if (metadata.sampler) {
+            const paramsEl = document.createElement('div');
+            paramsEl.innerHTML = `
+                <div class="font-medium text-gray-700">sampler</div>
+                <div class="text-gray-600">${metadata.sampler}</div>
+            `;
+            metadataDiv.appendChild(paramsEl);
+        }
+        if (metadata.scheduler) {
+            const paramsEl = document.createElement('div');
+            paramsEl.innerHTML = `
+                <div class="font-medium text-gray-700">scheduler</div>
+                <div class="text-gray-600">${metadata.scheduler}</div>
+            `;
+            metadataDiv.appendChild(paramsEl);
+        }
+        if (metadata.cfg) {
+            const paramsEl = document.createElement('div');
+            paramsEl.innerHTML = `
+                <div class="font-medium text-gray-700">cfg</div>
+                <div class="text-gray-600">${metadata.cfg}</div>
+            `;
+            metadataDiv.appendChild(paramsEl);
+        }
+        if (metadata.steps) {
+            const paramsEl = document.createElement('div');
+            paramsEl.innerHTML = `
+                <div class="font-medium text-gray-700">steps</div>
+                <div class="text-gray-600">${metadata.steps}</div>
+            `;
+            metadataDiv.appendChild(paramsEl);
+        }
 
         // 添加提示词信息
         if (metadata.positivePrompt) {
-            const promptEl = document.createElement('div');
-            promptEl.innerHTML = `
-                <div class="font-medium text-gray-700">正向提示词</div>
-                <div class="text-gray-600 whitespace-pre-wrap">${metadata.positivePrompt}</div>
-            `;
+            const promptEl = createPromptElement('正面提示词', metadata.positivePrompt);
             metadataDiv.appendChild(promptEl);
         }
 
         if (metadata.negativePrompt) {
-            const negPromptEl = document.createElement('div');
-            negPromptEl.innerHTML = `
-                <div class="font-medium text-gray-700">负向提示词</div>
-                <div class="text-gray-600 whitespace-pre-wrap">${metadata.negativePrompt}</div>
-            `;
+            const negPromptEl = createPromptElement('负面提示词', metadata.negativePrompt);
             metadataDiv.appendChild(negPromptEl);
         }
 
@@ -197,3 +214,38 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('result').classList.remove('hidden');
     }
 });
+
+
+function createPromptElement(label, content) {
+
+    const promptEl = document.createElement('div');
+    promptEl.innerHTML = `
+        <div class="prompt-group mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="font-medium text-gray-700">${label}</span>
+                <button class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors duration-200" data-content="${content}">
+                    <i class="ri-file-copy-line mr-1"></i>
+                    复制
+                </button>
+            </div>
+            <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">${content}</p>
+        </div>
+    `;
+    promptEl.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const content = btn.dataset.content;
+            await navigator.clipboard.writeText(content);
+            
+            // 显示复制成功的临时提示
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+            btn.classList.add('bg-green-100', 'text-green-600');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-100', 'text-green-600');
+            }, 2000);
+        });
+    });
+    return promptEl;
+}
