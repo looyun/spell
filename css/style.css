@@ -1,0 +1,84 @@
+.hidden {
+    display: none;
+}
+
+#dropZone {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+#dropZone.dragover {
+    background-color: rgba(59, 130, 246, 0.05);
+    border-color: rgb(59, 130, 246);
+    transform: scale(1.02);
+}
+
+#globalDropZone {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#globalDropZone.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* 添加拖拽时的视觉反馈 */
+.drag-active #dropZone {
+    border-color: rgb(59, 130, 246);
+    background-color: rgba(59, 130, 246, 0.05);
+    transform: scale(1.02);
+}
+
+/* 添加暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(to bottom right, #1a1a1a, #2d2d2d);
+        color: #e5e5e5;
+    }
+
+    #dropZone {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .bg-white {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .text-gray-800 {
+        color: #e5e5e5 !important;
+    }
+
+    .text-gray-600 {
+        color: #a0aec0 !important;
+    }
+
+    .text-gray-400 {
+        color: #718096 !important;
+    }
+
+    .border-gray-100 {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+}
+
+/* 添加平滑动画 */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* 添加悬浮效果 */
+#copyBtn:hover {
+    transform: translateY(-1px);
+}
+
+/* 添加阴影效果 */
+.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -3px rgba(0, 0, 0, 0.05);
+}

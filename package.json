@@ -1,0 +1,28 @@
+{
+  "name": "spell",
+  "private": true,
+  "version": "1.0.0",
+  "description": "一个简单的网页工具，用于提取和显示 AI 生成图片(ComfyUI等)的元数据信息。可部署在GitHub Pages上。",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "highlight.js": "^11.8.0",
+    "postcss": "^8.5.3",
+    "remixicon": "^2.5.0",
+    "tailwindcss": "^2.2.19",
+    "vite": "^6.2.6"
+  }
+}
