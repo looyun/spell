@@ -115,6 +115,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 添加参数信息
+        if (metadata.model) {
+            const paramsEl = document.createElement('div');
+            paramsEl.innerHTML = `
+                <div class="font-medium text-gray-700">model</div>
+                <div class="text-gray-600">${metadata.model}</div>
+            `;
+            metadataDiv.appendChild(paramsEl);
+        }
+        
         if (metadata.sampler) {
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `

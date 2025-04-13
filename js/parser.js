@@ -109,28 +109,41 @@ class ImageParser {
             return 'NovelAI';
         }
         
-        const software = tags.Software?.description || '';
-        // Stable Diffusion 特征
-        if (software.includes('Stable Diffusion') || description.includes('Stable Diffusion')) {
-            return 'Stable Diffusion';
-        }
-
         return 'Unknown';
     }
 
-    parseNovelAI(tags) {
-        // NovelAI 通常在 ImageDescription 或 Comment 中存储信息
-        const description = tags.ImageDescription?.description || tags.Comment?.description || '';
-        
-        // NovelAI 格式: Positive prompt | Negative prompt | Parameters
-        const parts = description.split('|').map(part => part.trim());
-        
-        return {
-            model: 'NovelAI',
-            positivePrompt: parts[0] || '',
-            negativePrompt: parts[1] || '',
-            parameters: this.parseParameters(parts[2] || '')
-        };
+    parseNovelAI(exif) {
+        try {
+            // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
+            const params = exif.parameters?.description || '';
+            const lines = params.split('\n');
+            console.log('解析到的NovelAI参数:', lines);
+            const result = {};
+            // 处理最后一行，假设它是 config
+            const lastLine = lines.pop();
+            const config = lastLine.split(',');
+            console.log('解析到的config:', config);
+            lastLine.split(',').forEach(param => {
+                // 只分割第一个冒号
+                const [key, value] = param.split(':',2).map(p => p.trim());
+                if (key && value) {
+                    result[key] = value;
+                }
+            });
+            console.log('解析到的result:', result);
+            return {
+                model: result['Model'] || 'Unknown',
+                cfg: result['CFG scale'] || '',
+                steps: result['Steps']  || '',
+                seed: result['Seed']  || '',
+                sampler: result['Sampler']  || '',
+                scheduler: result['Schedule type']  || '',
+                negativePrompt: lines.pop() || '',
+                positivePrompt: lines || '',
+            };
+        } catch {
+            return '{}';
+        }
     }
 
     // 修改 parseComfyUI 方法以保存完整 workflow
@@ -152,13 +165,15 @@ class ImageParser {
         try {
             const data = JSON.parse(exif.prompt?.description || '{}');
             console.log('解析到的ComfyUI提示:', data);
+
+            const samplerNode = data["5"] || data["61"] ;
             return {
                 model: data["1"]?.inputs?.ckpt_name || 'Unknown',
-                cfg: data["61"]?.inputs?.cfg || '',
-                steps: data["61"]?.inputs?.steps || '',
-                seed: data["61"]?.inputs?.seed || '',
-                sampler: data["61"]?.inputs?.sampler_name || '',
-                scheduler: data["61"]?.inputs?.scheduler || '',
+                cfg: samplerNode?.inputs?.cfg || '',
+                steps: samplerNode?.inputs?.steps || '',
+                seed: samplerNode?.inputs?.seed || '',
+                sampler: samplerNode?.inputs?.sampler_name || '',
+                scheduler: samplerNode?.inputs?.scheduler || '',
                 positivePrompt: data["39"]?.inputs?.text || '',
                 negativePrompt: data["25"]?.inputs?.text || '',
             };
