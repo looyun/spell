@@ -81,27 +81,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleFile(file) {
-        // 添加图片预览
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const previewImage = document.getElementById('previewImage');
-            previewImage.src = e.target.result;
-        }
-        reader.readAsDataURL(file);
-        
         // 显示结果区域
-        showResult();
-        
-        // 继续处理元数据...
-    }
-
-    function showResult() {
         const resultDiv = document.getElementById('result');
         resultDiv.classList.remove('hidden');
-        // 添加平滑滚动
-        resultDiv.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start'
+        
+        // 等待图片加载完成
+        await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImage = document.getElementById('previewImage');
+                previewImage.src = e.target.result;
+                // 等待图片加载完成后再滚动
+                previewImage.onload = () => {
+                    resultDiv.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start'
+                    });
+                    resolve();
+                };
+            }
+            reader.readAsDataURL(file);
         });
     }
 
@@ -117,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         metadataDiv.appendChild(generatorEl);
 
-        // 添加分辨率信息
+        // 添加分辨率信息 (保持不变)
         if (metadata.dimensions) {
             const dimensionsEl = document.createElement('div');
             dimensionsEl.innerHTML = `
@@ -127,45 +126,42 @@ document.addEventListener('DOMContentLoaded', () => {
             metadataDiv.appendChild(dimensionsEl);
         }
 
-        // 添加参数信息
+        // Model 信息（保持不变，因为有额外的按钮）
         if (metadata.model) {
+            const civitaiLink = `https://civitai.com/search/models?query=${metadata.model}`;
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
                 <div class="font-medium text-gray-700">model</div>
-                <div class="text-gray-600">${metadata.model}</div>
+                <div class="flex justify-between items-center">
+                    <div class="text-gray-600">${metadata.model}</div>
+                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4">查找模型</a>
+                </div>
             `;
             metadataDiv.appendChild(paramsEl);
         }
-        
-        if (metadata.sampler) {
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">sampler</div>
-                <div class="text-gray-600">${metadata.sampler}</div>
+
+        // 合并 sampler 和 scheduler
+        if (metadata.sampler || metadata.scheduler) {
+            const samplingEl = document.createElement('div');
+            samplingEl.innerHTML = `
+                <div class="font-medium text-gray-700">采样设置</div>
+                <div class="text-gray-600 grid grid-cols-2 gap-4">
+                    ${metadata.sampler ? `<div>采样器: ${metadata.sampler}</div>` : ''}
+                    ${metadata.scheduler ? `<div>调度器: ${metadata.scheduler}</div>` : ''}
+                </div>
             `;
-            metadataDiv.appendChild(paramsEl);
+            metadataDiv.appendChild(samplingEl);
         }
-        if (metadata.scheduler) {
+
+        // 合并 steps 和 cfg
+        if (metadata.steps || metadata.cfg) {
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">scheduler</div>
-                <div class="text-gray-600">${metadata.scheduler}</div>
-            `;
-            metadataDiv.appendChild(paramsEl);
-        }
-        if (metadata.cfg) {
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">cfg</div>
-                <div class="text-gray-600">${metadata.cfg}</div>
-            `;
-            metadataDiv.appendChild(paramsEl);
-        }
-        if (metadata.steps) {
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">steps</div>
-                <div class="text-gray-600">${metadata.steps}</div>
+                <div class="font-medium text-gray-700">生成参数</div>
+                <div class="text-gray-600 grid grid-cols-2 gap-4">
+                    ${metadata.cfg ? `<div>CFG: ${metadata.cfg}</div>` : ''}
+                    ${metadata.steps ? `<div>步数: ${metadata.steps}</div>` : ''}
+                </div>
             `;
             metadataDiv.appendChild(paramsEl);
         }
