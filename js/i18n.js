@@ -61,7 +61,6 @@ export function getCurrentLang() {
 
 export function setLanguage(lang) {
     localStorage.setItem('language', lang);
-    window.location.reload();
 }
 
 export function t(key) {

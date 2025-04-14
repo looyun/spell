@@ -87,12 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function processImage(file) {
         try {
-            handleFile(file);
             const parser = new ImageParser();
             const metadata = await parser.parse(file);
             console.log('解析结果:', metadata);
-            // 添加这行来显示解析结果
             displayMetadata(metadata);
+            handleFile(file);
         } catch (error) {
             console.error('处理图片失败:', error);
             alert(error.message);
@@ -100,9 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleFile(file) {
-        // 显示结果区域
+        // 显示结果区域（仅在首次加载时）
         const resultDiv = document.getElementById('result');
-        resultDiv.classList.remove('hidden');
+        if (resultDiv.classList.contains('hidden')) {
+            resultDiv.classList.remove('hidden');
+        }
         
         // 等待图片加载完成
         await new Promise((resolve) => {
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 添加生成器信息
         const generatorEl = document.createElement('div');
         generatorEl.innerHTML = `
-            <div class="font-medium text-gray-700">${t('generator')}</div>
+            <div class="font-medium text-gray-700" data-i18n="generator">${t('generator')}</div>
             <div class="text-gray-600">${metadata.generator}</div>
         `;
         metadataDiv.appendChild(generatorEl);
@@ -139,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.dimensions) {
             const dimensionsEl = document.createElement('div');
             dimensionsEl.innerHTML = `
-                <div class="font-medium text-gray-700">${t('dimensions')}</div>
+                <div class="font-medium text-gray-700" data-i18n="dimensions">${t('dimensions')}</div>
                 <div class="text-gray-600">${metadata.dimensions.width} × ${metadata.dimensions.height}</div>
             `;
             metadataDiv.appendChild(dimensionsEl);
@@ -150,10 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const civitaiLink = `https://civitai.com/search/models?query=${metadata.model}`;
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">${t('model')}</div>
+                <div class="font-medium text-gray-700" data-i18n="model">${t('model')}</div>
                 <div class="flex justify-between items-center">
                     <div class="text-gray-600">${metadata.model}</div>
-                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4">${t('findModel')}</a>
+                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4" data-i18n='findModel'>${t('findModel')}</a>
                 </div>
             `;
             metadataDiv.appendChild(paramsEl);
@@ -163,10 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.sampler || metadata.scheduler) {
             const samplingEl = document.createElement('div');
             samplingEl.innerHTML = `
-                <div class="font-medium text-gray-700">${t('samplingSettings')}</div>
+                <div class="font-medium text-gray-700" data-i18n="samplingSettings">${t('samplingSettings')}</div>
                 <div class="text-gray-600 grid grid-cols-2 gap-4">
-                    ${metadata.sampler ? `<div>${t('sampler')}: ${metadata.sampler}</div>` : ''}
-                    ${metadata.scheduler ? `<div>${t('scheduler')}: ${metadata.scheduler}</div>` : ''}
+                    ${metadata.sampler ? `
+                        <div>
+                            <span data-i18n="sampler">${t('sampler')}</span>: 
+                            <span>${metadata.sampler}</span>
+                        </div>` : ''
+                    }
+                    ${metadata.scheduler ? `
+                        <div>
+                            <span data-i18n="scheduler">${t('scheduler')}</span>: 
+                            <span>${metadata.scheduler}</span>
+                        </div>` : ''
+                    }
                 </div>
             `;
             metadataDiv.appendChild(samplingEl);
@@ -176,10 +187,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.steps || metadata.cfg) {
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">${t('generationParams')}</div>
+                <div class="font-medium text-gray-700" data-i18n="generationParams">${t('generationParams')}</div>
                 <div class="text-gray-600 grid grid-cols-2 gap-4">
                     ${metadata.cfg ? `<div>CFG: ${metadata.cfg}</div>` : ''}
-                    ${metadata.steps ? `<div>${t('steps')}: ${metadata.steps}</div>` : ''}
+                    ${metadata.steps ? `
+                        <div>
+                            <span data-i18n="steps">${t('steps')}</span>: 
+                            <span>${metadata.steps}</span>
+                        </div>` : ''
+                    }
                 </div>
             `;
             metadataDiv.appendChild(paramsEl);
@@ -200,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.parameters && Object.keys(metadata.parameters).length > 0) {
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">参数设置</div>
+                <div class="font-medium text-gray-700" data-i18n="parameters">参数设置</div>
                 <div class="text-gray-600">
                     ${Object.entries(metadata.parameters)
                         .map(([key, value]) => `<div>${key}: ${value}</div>`)
@@ -214,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.workflow) {
             const workflowEl = document.createElement('div');
             workflowEl.innerHTML = `
-                <div class="font-medium text-gray-700">完整工作流</div>
+                <div class="font-medium text-gray-700" data-i18n="workflow">完整工作流</div>
                 <div class="text-gray-600 bg-gray-50 p-3 rounded-lg overflow-x-auto">
                     <pre class="text-sm">${metadata.workflow}</pre>
                 </div>
@@ -246,9 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 jsonViewer.classList.add('hidden');
             }
         }
-
-        // 显示结果区域
-        document.getElementById('result').classList.remove('hidden');
     }
 });
 
@@ -259,9 +272,9 @@ function createPromptElement(label, content) {
     promptEl.innerHTML = `
         <div class="prompt-group mb-4">
             <div class="flex justify-between items-center mb-2">
-                <span class="font-medium text-gray-700">${t(label)}</span>
+                <span class="font-medium text-gray-700" data-i18n="label">${t(label)}</span>
                 <button class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors duration-200" data-content="${content}">
-                    <i class="ri-file-copy-line mr-1"></i>
+                    <i class="ri-file-copy-line mr-1" data-i18n="copy"></i>
                     ${t('copy')}
                 </button>
             </div>
@@ -275,7 +288,7 @@ function createPromptElement(label, content) {
             
             // 显示复制成功的临时提示
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<i class="ri-check-line mr-1"></i>${t('copied')}`;
+            btn.innerHTML = `<i class="ri-check-line mr-1" data-i18n="copied"></i>${t('copied')}`;
             btn.classList.add('bg-green-100', 'text-green-600');
             
             setTimeout(() => {
