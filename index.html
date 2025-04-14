@@ -27,17 +27,25 @@
     </div>
 
     <div class="container mx-auto px-4 py-12 max-w-7xl">
+        <!-- 在 container div 的开头添加语言切换器 -->
+        <div class="absolute top-4 right-4">
+            <select id="langSelect" class="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm">
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+
         <!-- 标题部分 -->
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">魔法咒语解析</h1>
-            <p class="text-gray-600">轻松提取AI生成图片的元数据信息</p>
+            <h1 data-i18n="title" class="text-4xl font-bold text-gray-800 mb-2">魔法咒语解析</h1>
+            <p data-i18n="subtitle" class="text-gray-600">轻松提取AI生成图片的元数据信息</p>
         </div>
         
         <!-- 上传区域 -->
         <div id="dropZone" class="border-3 border-dashed border-blue-200 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white bg-opacity-50 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400">
             <i class="ri-upload-cloud-2-line text-5xl text-blue-400 mb-4"></i>
-            <p class="text-gray-600 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
-            <p class="text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
+            <p data-i18n="dropzoneText" class="text-gray-600 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
+            <p data-i18n="dropzoneSubtext" class="text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
             <input type="file" id="fileInput" class="hidden" accept="image/*">
         </div>
 
@@ -47,7 +55,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                     <!-- 左侧图片预览 -->
                     <div class="image-preview">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">图片预览</h3>
+                        <h3 data-i18n="previewTitle" class="text-xl font-semibold text-gray-800 mb-4">图片预览</h3>
                         <div class="relative rounded-lg overflow-hidden bg-gray-50">
                             <img id="previewImage" class="w-full h-auto object-contain max-h-[600px]" src="" alt="图片预览">
                         </div>
@@ -56,7 +64,7 @@
                     <!-- 右侧信息显示 -->
                     <div class="metadata-info">
                         <div class="flex items-center mb-6">
-                            <h3 class="text-xl font-semibold text-gray-800">详细信息</h3>
+                            <h3 data-i18n="detailsTitle" class="text-xl font-semibold text-gray-800">详细信息</h3>
                         </div>
                         <div id="metadata" class="space-y-4 text-gray-700">
                             <!-- 每个提示词区域将包含自己的复制按钮 -->
@@ -67,8 +75,8 @@
                 <!-- JSON预览区域 -->
                 <div class="mt-8">
                     <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
-                        <h3 class="text-xl font-semibold text-gray-800">完整元数据</h3>
-                        <button id="toggleJson" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
+                        <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800">完整元数据</h3>
+                        <button id="toggleJson" data-i18n="toggleJson" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
                             <i class="ri-code-line mr-2"></i>
                             显示/隐藏 JSON
                         </button>

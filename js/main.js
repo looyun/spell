@@ -1,6 +1,14 @@
 import 'tailwindcss/dist/tailwind.css'
 import 'remixicon/fonts/remixicon.css'
 import 'highlight.js/styles/github.css'
+import { t, getCurrentLang, setLanguage } from './i18n.js';
+
+function updateI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+    });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('dropZone');
@@ -8,6 +16,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const result = document.getElementById('result');
     const metadata = document.getElementById('metadata');
     const parser = new ImageParser();
+
+    // 初始化语言选择器
+    const langSelect = document.getElementById('langSelect');
+    langSelect.value = getCurrentLang();
+    langSelect.addEventListener('change', (e) => {
+        setLanguage(e.target.value);
+        updateI18n();
+    });
+
+    // 初始化时更新一次
+    updateI18n();
 
     // 拖拽处理
     dropZone.addEventListener('dragover', (e) => {
@@ -111,16 +130,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // 添加生成器信息
         const generatorEl = document.createElement('div');
         generatorEl.innerHTML = `
-            <div class="font-medium text-gray-700">生成器</div>
+            <div class="font-medium text-gray-700">${t('generator')}</div>
             <div class="text-gray-600">${metadata.generator}</div>
         `;
         metadataDiv.appendChild(generatorEl);
 
-        // 添加分辨率信息 (保持不变)
+        // 添加分辨率信息
         if (metadata.dimensions) {
             const dimensionsEl = document.createElement('div');
             dimensionsEl.innerHTML = `
-                <div class="font-medium text-gray-700">图片尺寸</div>
+                <div class="font-medium text-gray-700">${t('dimensions')}</div>
                 <div class="text-gray-600">${metadata.dimensions.width} × ${metadata.dimensions.height}</div>
             `;
             metadataDiv.appendChild(dimensionsEl);
@@ -131,10 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const civitaiLink = `https://civitai.com/search/models?query=${metadata.model}`;
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">model</div>
+                <div class="font-medium text-gray-700">${t('model')}</div>
                 <div class="flex justify-between items-center">
                     <div class="text-gray-600">${metadata.model}</div>
-                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4">查找模型</a>
+                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4">${t('findModel')}</a>
                 </div>
             `;
             metadataDiv.appendChild(paramsEl);
@@ -144,10 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.sampler || metadata.scheduler) {
             const samplingEl = document.createElement('div');
             samplingEl.innerHTML = `
-                <div class="font-medium text-gray-700">采样设置</div>
+                <div class="font-medium text-gray-700">${t('samplingSettings')}</div>
                 <div class="text-gray-600 grid grid-cols-2 gap-4">
-                    ${metadata.sampler ? `<div>采样器: ${metadata.sampler}</div>` : ''}
-                    ${metadata.scheduler ? `<div>调度器: ${metadata.scheduler}</div>` : ''}
+                    ${metadata.sampler ? `<div>${t('sampler')}: ${metadata.sampler}</div>` : ''}
+                    ${metadata.scheduler ? `<div>${t('scheduler')}: ${metadata.scheduler}</div>` : ''}
                 </div>
             `;
             metadataDiv.appendChild(samplingEl);
@@ -157,10 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (metadata.steps || metadata.cfg) {
             const paramsEl = document.createElement('div');
             paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700">生成参数</div>
+                <div class="font-medium text-gray-700">${t('generationParams')}</div>
                 <div class="text-gray-600 grid grid-cols-2 gap-4">
                     ${metadata.cfg ? `<div>CFG: ${metadata.cfg}</div>` : ''}
-                    ${metadata.steps ? `<div>步数: ${metadata.steps}</div>` : ''}
+                    ${metadata.steps ? `<div>${t('steps')}: ${metadata.steps}</div>` : ''}
                 </div>
             `;
             metadataDiv.appendChild(paramsEl);
@@ -168,12 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 添加提示词信息
         if (metadata.positivePrompt) {
-            const promptEl = createPromptElement('正面提示词', metadata.positivePrompt);
+            const promptEl = createPromptElement('positivePrompt', metadata.positivePrompt);
             metadataDiv.appendChild(promptEl);
         }
 
         if (metadata.negativePrompt) {
-            const negPromptEl = createPromptElement('负面提示词', metadata.negativePrompt);
+            const negPromptEl = createPromptElement('negativePrompt', metadata.negativePrompt);
             metadataDiv.appendChild(negPromptEl);
         }
 
@@ -240,10 +259,10 @@ function createPromptElement(label, content) {
     promptEl.innerHTML = `
         <div class="prompt-group mb-4">
             <div class="flex justify-between items-center mb-2">
-                <span class="font-medium text-gray-700">${label}</span>
+                <span class="font-medium text-gray-700">${t(label)}</span>
                 <button class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors duration-200" data-content="${content}">
                     <i class="ri-file-copy-line mr-1"></i>
-                    复制
+                    ${t('copy')}
                 </button>
             </div>
             <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">${content}</p>
@@ -256,7 +275,7 @@ function createPromptElement(label, content) {
             
             // 显示复制成功的临时提示
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="ri-check-line mr-1"></i>已复制';
+            btn.innerHTML = `<i class="ri-check-line mr-1"></i>${t('copied')}`;
             btn.classList.add('bg-green-100', 'text-green-600');
             
             setTimeout(() => {
