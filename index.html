@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>咒语解析 - NAI | ComfyUI | Stable Diffussion | 画师串 | 画风串 | prompt | tag</title>
+    <title>魔法咒语解析 - NovelAI | ComfyUI | Stable Diffussion | NAI | 画师串 | 画风串 | prompt | tag</title>
     <!-- 引入 CSS -->
     <link href="node_modules/tailwindcss/dist/tailwind.css" rel="stylesheet">
     <link href="node_modules/remixicon/fonts/remixicon.css" rel="stylesheet">
@@ -29,7 +29,7 @@
     <div class="container mx-auto px-4 py-12 max-w-7xl">
         <!-- 标题部分 -->
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">咒语解析</h1>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">魔法咒语解析</h1>
             <p class="text-gray-600">轻松提取AI生成图片的元数据信息</p>
         </div>
         
@@ -37,12 +37,12 @@
         <div id="dropZone" class="border-3 border-dashed border-blue-200 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white bg-opacity-50 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400">
             <i class="ri-upload-cloud-2-line text-5xl text-blue-400 mb-4"></i>
             <p class="text-gray-600 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
-            <p class="text-gray-400 text-sm">支持 PNG、JPG、JPEG 格式</p>
+            <p class="text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
             <input type="file" id="fileInput" class="hidden" accept="image/*">
         </div>
 
         <!-- 结果展示区域 -->
-        <div id="result" class="hidden">
+        <div id="result" class="hidden min-h-[80vh]">
             <div class="bg-white rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                     <!-- 左侧图片预览 -->
@@ -73,7 +73,7 @@
                             显示/隐藏 JSON
                         </button>
                     </div>
-                    <div id="jsonViewer" class="hidden">
+                    <div id="jsonViewer">
                         <pre class="w-full bg-gray-50 p-4 rounded-lg"><code class="language-json whitespace-pre-wrap break-words" id="jsonContent"></code></pre>
                     </div>
                 </div>

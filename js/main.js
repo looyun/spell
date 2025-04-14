@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleFile(file) {
+    async function handleFile(file) {
         // 添加图片预览
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -90,9 +90,19 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
         
         // 显示结果区域
-        document.getElementById('result').classList.remove('hidden');
+        showResult();
         
         // 继续处理元数据...
+    }
+
+    function showResult() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.classList.remove('hidden');
+        // 添加平滑滚动
+        resultDiv.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+        });
     }
 
     function displayMetadata(metadata) {

@@ -141,7 +141,7 @@ class ImageParser {
                 negativePrompt: lines.pop() || '',
                 positivePrompt: lines || '',
             };
-        } catch {
+        } catch (error) {
             return '{}';
         }
     }
@@ -154,7 +154,8 @@ class ImageParser {
             const workflowData = JSON.parse(exif.workflow?.description || '{}');
             const workflow = this.parseComfyUIWorkflow(workflowData || '{}');
             return prompts;
-        } catch {
+        } catch (error) {
+            console.error('解析ComfyUI失败:', error);
             return this.parseGeneric(exif);
         }
     }
@@ -163,21 +164,69 @@ class ImageParser {
     parseComfyUIPrompts(exif) {
         
         try {
+
+            // 修复NaN问题
+            if (exif.prompt?.description) {
+                exif.prompt.description = exif.prompt.description.replace(/NaN/g, '0');
+            }
             const data = JSON.parse(exif.prompt?.description || '{}');
             console.log('解析到的ComfyUI提示:', data);
 
-            const samplerNode = data["5"] || data["61"] ;
+
+            // 处理不同节点类型
+            var samplerNode = null;
+            var checkPointNode = null;
+            var unetNode = null;
+            var positivePromptNode = null;
+            var negativePromptNode = null;
+            var clipTextEncodeKeys = null;
+
+            // samplerNodeType: KSampler (Efficient)| KSamplerSelect|BasicScheduler|KSampler|
+            // checkPointNodeType: easy a1111Loader | CheckpointLoaderSimple|
+            // unetNodeType: UNETLoader
+            // positivePromptNodeType: WeiLinComfyUIPromptAllInOneGreat | CLIPTextEncode|
+            // negativePromptNodeType: WeiLinComfyUIPromptAllInOneNeg | CLIPTextEncode|
+            for (const key in data) {
+                if (data[key]?.inputs) {
+                    if (data[key].class_type === 'KSampler' || data[key].class_type === 'KSampler (Efficient)' || data[key].class_type === 'KSamplerSelect' || data[key].class_type === 'BasicScheduler') {
+                        samplerNode= data[key].inputs;
+                    } else if (data[key].class_type === 'CheckpointLoaderSimple' || data[key].class_type === 'easy a1111Loader') {
+                        checkPointNode = data[key].inputs;
+                    } else if (data[key].class_type === 'UNETLoader') {
+                        unetNode = data[key].inputs;
+                    } else if (data[key].class_type === 'WeiLinComfyUIPromptAllInOneGreat') {
+                        positivePromptNode = data[key].inputs;
+                    } else if (data[key].class_type === 'WeiLinComfyUIPromptAllInOneNeg') {
+                        negativePromptNode = data[key].inputs;
+                    } else if (data[key].class_type === 'CLIPTextEncode') {
+                        clipTextEncodeKeys += key;
+                    }
+                }
+            }
+            // 从checkpoint或者unet节点中根据inputs.positive数组或者inputs.negative数组获取正向和负向提示
+            if (samplerNode && samplerNode.positive) {
+                for (const key in clipTextEncodeKeys) {
+                    if (key ===  samplerNode.positive[0]) {
+                        // 递归获取inputs，以比较key
+                        positivePromptNode = data[key].inputs;
+                    }
+                    if (key ===  samplerNode.negative[0]) {
+                        negativePromptNode = data[key].inputs;
+                    }
+                }
+            }
             return {
-                model: data["1"]?.inputs?.ckpt_name || 'Unknown',
-                cfg: samplerNode?.inputs?.cfg || '',
-                steps: samplerNode?.inputs?.steps || '',
-                seed: samplerNode?.inputs?.seed || '',
-                sampler: samplerNode?.inputs?.sampler_name || '',
-                scheduler: samplerNode?.inputs?.scheduler || '',
-                positivePrompt: data["39"]?.inputs?.text || '',
-                negativePrompt: data["25"]?.inputs?.text || '',
+                model: checkPointNode?.ckpt_name || unetNode?.unet_name || 'Unknown',
+                cfg: samplerNode?.cfg || '',
+                steps: samplerNode?.steps || '',
+                seed: samplerNode?.seed || '',
+                sampler: samplerNode?.sampler_name || '',
+                scheduler: samplerNode?.scheduler || '',
+                positivePrompt: positivePromptNode?.text || positivePromptNode?.positive || '',
+                negativePrompt: negativePromptNode?.text || negativePromptNode?.negative || '',
             };
-        } catch {
+        } catch (error) {
+            console.error('解析ComfyUI提示失败:', error);
             return '{}';
         }
     }
