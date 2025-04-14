@@ -57,9 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('drop', async (e) => {
         e.preventDefault();
         globalDropZone.classList.remove('active');
+        
+        // 处理文件拖拽
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
             await processImage(file);
+            return;
         }
     });
 

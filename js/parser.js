@@ -28,7 +28,7 @@ class ImageParser {
                     metadata = this.parseStableDiffusion(exif);
                     break;
                 default:
-                    metadata = this.parseGeneric(exif);
+                    metadata = {};
             }
 
             // 将完整的原始标签数据添加到返回结果中
@@ -208,21 +208,6 @@ class ImageParser {
             negativePrompt,
             parameters: this.extractSDParameters(params),
             rawParameters: params // 保存完整的参数字符串
-        };
-    }
-
-    parseGeneric(tags) {
-        return {
-            model: tags.Model?.description || 
-                   tags.Software?.description || 
-                   tags.Generator?.description || 
-                   'Unknown',
-            positivePrompt: tags.UserComment?.description || 
-                           tags.Description?.description ||
-                           tags.ImageDescription?.description ||
-                           '',
-            negativePrompt: '',
-            parameters: {}
         };
     }
 
