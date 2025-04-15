@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "一个简单的网页工具，用于提取和显示 AI 生成图片(ComfyUI等)的元数据信息。可部署在GitHub Pages上。",
   "main": "index.js",
-  "type": "module",
+  "type": "commonjs",
   "directories": {
     "lib": "lib"
   },

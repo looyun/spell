@@ -1,2 +1,4 @@
-export const darkMode = 'class';
-export const content = ['./**/*.{html,js}'];
+module.exports = {
+  darkMode: 'class',
+  content: ['./**/*.{html,js}'],
+};
