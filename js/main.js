@@ -1,4 +1,9 @@
 import { t, getCurrentLang, setLanguage } from './i18n.js';
+import ImageParser from './parser.js';
+import hljs from 'highlight.js'
+
+window.hljs = hljs
+
 
 function updateI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -10,27 +15,14 @@ function updateI18n() {
 document.addEventListener('DOMContentLoaded', () => {
     // 主题切换功能
     const themeToggle = document.getElementById('themeToggle');
-    
-    function updateTheme(dark) {
-        if (dark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }
-    // 主题切换按钮点击事件
     themeToggle.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.toggle('dark');
+        const html = document.documentElement;
+        const isDark = html.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
-    const result = document.getElementById('result');
-    const metadata = document.getElementById('metadata');
-    const parser = new ImageParser();
 
     // 初始化语言选择器
     const langSelect = document.getElementById('langSelect');
@@ -76,22 +68,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 添加全局拖拽支持
     const globalDropZone = document.getElementById('globalDropZone');
-    
+
     document.body.addEventListener('dragover', (e) => {
         e.preventDefault();
         globalDropZone.classList.add('active');
     });
-    
+
     document.body.addEventListener('dragleave', (e) => {
         if (e.target === document.body || e.target === globalDropZone) {
             globalDropZone.classList.remove('active');
         }
     });
-    
+
     document.body.addEventListener('drop', async (e) => {
         e.preventDefault();
         globalDropZone.classList.remove('active');
-        
+
         // 处理文件拖拽
         const file = e.dataTransfer.files[0];
         if (file && file.type.startsWith('image/')) {
@@ -119,17 +111,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (resultDiv.classList.contains('hidden')) {
             resultDiv.classList.remove('hidden');
         }
-        
+
         // 等待图片加载完成
         await new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 const previewImage = document.getElementById('previewImage');
                 previewImage.src = e.target.result;
                 // 等待图片加载完成后再滚动
                 previewImage.onload = () => {
-                    resultDiv.scrollIntoView({ 
-                        behavior: 'smooth', 
+                    resultDiv.scrollIntoView({
+                        behavior: 'smooth',
                         block: 'start'
                     });
                     resolve();
@@ -145,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 更新分辨率信息
         if (metadata.dimensions) {
-            toggleSection('dimensions', 
+            toggleSection('dimensions',
                 `${metadata.dimensions.width} × ${metadata.dimensions.height}`);
         }
 
@@ -163,12 +155,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if (metadata.sampler) {
                 document.getElementById('sampler-content').classList.remove('hidden');
                 document.getElementById('sampler-value').textContent = metadata.sampler;
+            } else {
+                document.getElementById('sampler-content').classList.add('hidden');
             }
 
             if (metadata.scheduler) {
                 document.getElementById('scheduler-content').classList.remove('hidden');
                 document.getElementById('scheduler-value').textContent = metadata.scheduler;
+            } else {
+                document.getElementById('scheduler-content').classList.add('hidden');
             }
+        } else {
+            document.getElementById('sampling-section').classList.add('hidden');
+        }
+
+        // 更新 CFG 和步数和种子
+        if (metadata.seed || metadata.steps || metadata.cfg) {
+            document.getElementById('generation-section').classList.remove('hidden');
+            if (metadata.cfg) {
+                document.getElementById('cfg-content').classList.remove('hidden');
+                document.getElementById('cfg-value').textContent = metadata.cfg;
+            } else {
+                document.getElementById('cfg-content').classList.add('hidden');
+            }
+            if (metadata.steps) {
+                document.getElementById('steps-content').classList.remove('hidden');
+                document.getElementById('steps-value').textContent = metadata.steps;
+            } else {
+                document.getElementById('steps-content').classList.add('hidden');
+            }
+            if (metadata.seed) {
+                document.getElementById('seed-content').classList.remove('hidden');
+                document.getElementById('seed-value').textContent = metadata.seed;
+            } else {
+                document.getElementById('seed-content').classList.add('hidden');
+            }
+        } else {
+            document.getElementById('generation-section').classList.add('hidden');
         }
 
         // 更新提示词
@@ -177,18 +200,22 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('prompt-content').textContent = metadata.positivePrompt;
             const copyPromptBtn = document.getElementById('copy-prompt');
             copyPromptBtn.dataset.content = metadata.positivePrompt;
+        } else {
+            document.getElementById('prompt-section').classList.add('hidden');
         }
         if (metadata.negativePrompt) {
             document.getElementById('negative-prompt-section').classList.remove('hidden');
             document.getElementById('negative-prompt-content').textContent = metadata.negativePrompt;
             document.getElementById('copy-negative-prompt').dataset.content = metadata.negativePrompt;
+        } else {
+            document.getElementById('negative-prompt-section').classList.add('hidden');
         }
 
         // 修改 JSON 预览部分
         const jsonContent = document.getElementById('jsonContent');
         jsonContent.textContent = JSON.stringify(metadata.rawTags, null, 2);
         jsonContent.classList.add('whitespace-pre');  // 保持原始格式
-        
+
         // 使用 highlight.js 的正确方法
         if (hljs) {
             hljs.highlightAll();
@@ -197,11 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 辅助函数：显示/隐藏区域并更新内容
     function toggleSection(id, content) {
-        if (!content) return;
-        
+        if (!content) {
+            section.classList.add('hidden');
+            return
+        }
         const section = document.getElementById(`${id}-section`);
         const contentEl = document.getElementById(`${id}-content`);
-        
+
         section.classList.remove('hidden');
         contentEl.textContent = content;
     }
@@ -218,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showCopySuccess(btn) {
         const defaultMessage = btn.querySelector('#default-message');
         const successMessage = btn.querySelector('#success-message');
-    
+
         defaultMessage.classList.add('hidden');
         successMessage.classList.remove('hidden');
 

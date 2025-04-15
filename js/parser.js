@@ -1,3 +1,5 @@
+
+import ExifReader from 'exifreader';
 class ImageParser {
     async parse(file) {
         try {
@@ -298,3 +300,5 @@ class ImageParser {
         return params;
     }
 }
+
+export default ImageParser;
