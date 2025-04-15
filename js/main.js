@@ -145,117 +145,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayMetadata(metadata) {
-        const metadataDiv = document.getElementById('metadata');
-        metadataDiv.innerHTML = '';
+        // 更新生成器信息
+        toggleSection('generator', metadata.generator);
 
-        // 添加生成器信息
-        const generatorEl = document.createElement('div');
-        generatorEl.innerHTML = `
-            <div class="font-medium text-gray-700" data-i18n="generator">${t('generator')}</div>
-            <div class="text-gray-600">${metadata.generator}</div>
-        `;
-        metadataDiv.appendChild(generatorEl);
-
-        // 添加分辨率信息
+        // 更新分辨率信息
         if (metadata.dimensions) {
-            const dimensionsEl = document.createElement('div');
-            dimensionsEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="dimensions">${t('dimensions')}</div>
-                <div class="text-gray-600">${metadata.dimensions.width} × ${metadata.dimensions.height}</div>
-            `;
-            metadataDiv.appendChild(dimensionsEl);
+            toggleSection('dimensions', 
+                `${metadata.dimensions.width} × ${metadata.dimensions.height}`);
         }
 
-        // Model 信息（保持不变，因为有额外的按钮）
+        // 更新模型信息
         if (metadata.model) {
-            const civitaiLink = `https://civitai.com/search/models?query=${metadata.model}`;
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="model">${t('model')}</div>
-                <div class="flex justify-between items-center">
-                    <div class="text-gray-600">${metadata.model}</div>
-                    <a href="${civitaiLink}" target="_blank" class="text-blue-500 hover:underline ml-4" data-i18n='findModel'>${t('findModel')}</a>
-                </div>
-            `;
-            metadataDiv.appendChild(paramsEl);
+            toggleSection('model', metadata.model);
+            const modelLink = document.getElementById('model-link');
+            modelLink.href = `https://civitai.com/search/models?query=${metadata.model}`;
         }
 
-        // 合并 sampler 和 scheduler
+        // 更新采样设置
         if (metadata.sampler || metadata.scheduler) {
-            const samplingEl = document.createElement('div');
-            samplingEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="samplingSettings">${t('samplingSettings')}</div>
-                <div class="text-gray-600 grid grid-cols-2 gap-4">
-                    ${metadata.sampler ? `
-                        <div>
-                            <span data-i18n="sampler">${t('sampler')}</span>: 
-                            <span>${metadata.sampler}</span>
-                        </div>` : ''
-                    }
-                    ${metadata.scheduler ? `
-                        <div>
-                            <span data-i18n="scheduler">${t('scheduler')}</span>: 
-                            <span>${metadata.scheduler}</span>
-                        </div>` : ''
-                    }
-                </div>
-            `;
-            metadataDiv.appendChild(samplingEl);
+            document.getElementById('sampling-section').classList.remove('hidden');
+
+            if (metadata.sampler) {
+                document.getElementById('sampler-content').classList.remove('hidden');
+                document.getElementById('sampler-value').textContent = metadata.sampler;
+            }
+
+            if (metadata.scheduler) {
+                document.getElementById('scheduler-content').classList.remove('hidden');
+                document.getElementById('scheduler-value').textContent = metadata.scheduler;
+            }
         }
 
-        // 合并 steps 和 cfg
-        if (metadata.steps || metadata.cfg) {
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="generationParams">${t('generationParams')}</div>
-                <div class="text-gray-600 grid grid-cols-2 gap-4">
-                    ${metadata.cfg ? `<div>CFG: ${metadata.cfg}</div>` : ''}
-                    ${metadata.steps ? `
-                        <div>
-                            <span data-i18n="steps">${t('steps')}</span>: 
-                            <span>${metadata.steps}</span>
-                        </div>` : ''
-                    }
-                </div>
-            `;
-            metadataDiv.appendChild(paramsEl);
-        }
-
-        // 添加提示词信息
+        // 更新提示词
         if (metadata.positivePrompt) {
-            const promptEl = createPromptElement('positivePrompt', metadata.positivePrompt);
-            metadataDiv.appendChild(promptEl);
+            document.getElementById('prompt-section').classList.remove('hidden');
+            document.getElementById('prompt-content').textContent = metadata.positivePrompt;
+            const copyPromptBtn = document.getElementById('copy-prompt');
+            copyPromptBtn.dataset.content = metadata.positivePrompt;
         }
-
         if (metadata.negativePrompt) {
-            const negPromptEl = createPromptElement('negativePrompt', metadata.negativePrompt);
-            metadataDiv.appendChild(negPromptEl);
-        }
-
-        // 添加参数信息
-        if (metadata.parameters && Object.keys(metadata.parameters).length > 0) {
-            const paramsEl = document.createElement('div');
-            paramsEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="parameters">参数设置</div>
-                <div class="text-gray-600">
-                    ${Object.entries(metadata.parameters)
-                        .map(([key, value]) => `<div>${key}: ${value}</div>`)
-                        .join('')}
-                </div>
-            `;
-            metadataDiv.appendChild(paramsEl);
-        }
-
-        // 添加完整 workflow（如果有）
-        if (metadata.workflow) {
-            const workflowEl = document.createElement('div');
-            workflowEl.innerHTML = `
-                <div class="font-medium text-gray-700" data-i18n="workflow">完整工作流</div>
-                <div class="text-gray-600 bg-gray-50 p-3 rounded-lg overflow-x-auto">
-                    <pre class="text-sm">${metadata.workflow}</pre>
-                </div>
-            `;
-            metadataDiv.appendChild(workflowEl);
+            document.getElementById('negative-prompt-section').classList.remove('hidden');
+            document.getElementById('negative-prompt-content').textContent = metadata.negativePrompt;
+            document.getElementById('copy-negative-prompt').dataset.content = metadata.negativePrompt;
         }
 
         // 修改 JSON 预览部分
@@ -268,39 +199,38 @@ document.addEventListener('DOMContentLoaded', () => {
             hljs.highlightAll();
         }
     }
-});
 
+    // 辅助函数：显示/隐藏区域并更新内容
+    function toggleSection(id, content) {
+        if (!content) return;
+        
+        const section = document.getElementById(`${id}-section`);
+        const contentEl = document.getElementById(`${id}-content`);
+        
+        section.classList.remove('hidden');
+        contentEl.textContent = content;
+    }
 
-function createPromptElement(label, content) {
-
-    const promptEl = document.createElement('div');
-    promptEl.innerHTML = `
-        <div class="prompt-group mb-4">
-            <div class="flex justify-between items-center mb-2">
-                <span class="font-medium text-gray-700" data-i18n="label">${t(label)}</span>
-                <button class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors duration-200" data-content="${content}">
-                    <i class="ri-file-copy-line mr-1" data-i18n="copy"></i>
-                    ${t('copy')}
-                </button>
-            </div>
-            <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">${content}</p>
-        </div>
-    `;
-    promptEl.querySelectorAll('.copy-btn').forEach(btn => {
+    // 复制按钮事件处理可以集中管理
+    document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const content = btn.dataset.content;
             await navigator.clipboard.writeText(content);
-            
-            // 显示复制成功的临时提示
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<i class="ri-check-line mr-1" data-i18n="copied"></i>${t('copied')}`;
-            btn.classList.add('bg-green-100', 'text-green-600');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.remove('bg-green-100', 'text-green-600');
-            }, 2000);
+            showCopySuccess(btn);
         });
     });
-    return promptEl;
-}
+
+    function showCopySuccess(btn) {
+        const defaultMessage = btn.querySelector('#default-message');
+        const successMessage = btn.querySelector('#success-message');
+    
+        defaultMessage.classList.add('hidden');
+        successMessage.classList.remove('hidden');
+
+        // reset to default state
+        setTimeout(() => {
+            defaultMessage.classList.remove('hidden');
+            successMessage.classList.add('hidden');
+        }, 2000);
+    }
+});

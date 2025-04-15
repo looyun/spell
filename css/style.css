@@ -44,39 +44,6 @@
     transform: scale(1.02);
 }
 
-/* 添加暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-    body {
-        background: linear-gradient(to bottom right, #1a1a1a, #2d2d2d);
-        color: #e5e5e5;
-    }
-
-    #dropZone {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .bg-white {
-        background-color: rgba(255, 255, 255, 0.1) !important;
-    }
-
-    .text-gray-800 {
-        color: #e5e5e5 !important;
-    }
-
-    .text-gray-600 {
-        color: #a0aec0 !important;
-    }
-
-    .text-gray-400 {
-        color: #718096 !important;
-    }
-
-    .border-gray-100 {
-        border-color: rgba(255, 255, 255, 0.1) !important;
-    }
-}
-
 /* 添加平滑动画 */
 .transition-all {
     transition: all 0.3s ease;

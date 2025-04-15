@@ -4,10 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>魔法咒语解析 - NovelAI | ComfyUI | Stable Diffussion | NAI | 画师串 | 画风串 | prompt | tag</title>
-    <!-- 引入 CSS -->
+    <!-- 调整顺序：先加载 highlight.js 的样式，然后是其他样式 -->
     <link href="node_modules/tailwindcss/dist/tailwind.css" rel="stylesheet">
+    <link href="node_modules/highlight.js/styles/github.css" rel="stylesheet" media="(prefers-color-scheme: light)">
+    <link href="node_modules/highlight.js/styles/github-dark.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
     <link href="node_modules/remixicon/fonts/remixicon.css" rel="stylesheet">
-    <link href="node_modules/highlight.js/styles/github.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="dist/output.css" rel="stylesheet">
     <script>
         // 在页面加载时立即检查主题，避免闪烁
         if (localStorage.getItem('theme') === 'dark' || 
@@ -23,27 +26,25 @@
         window.hljs = hljs
     </script>
     <script type="module" src="/js/main.js"></script>
-    <link href="css/style.css" rel="stylesheet">
-    <link href="dist/output.css" rel="stylesheet">
     <script src="lib/exif-reader.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen relative">
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen relative">
     <!-- 修改全局拖拽提示 -->
-    <div id="globalDropZone" class="fixed inset-0 bg-blue-500 dark:bg-blue-900 bg-opacity-10 backdrop-filter backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl text-center">
+    <div id="globalDropZone" class="fixed inset-0 bg-blue-500 dark:bg-blue-950 bg-opacity-10 backdrop-filter backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-2xl text-center">
             <i class="ri-upload-cloud-2-line text-6xl text-blue-500 dark:text-blue-400 mb-4"></i>
-            <p class="text-xl font-semibold text-gray-800 dark:text-gray-200">松开鼠标上传图片</p>
+            <p class="text-xl font-semibold text-gray-800 dark:text-gray-100">松开鼠标上传图片</p>
         </div>
     </div>
 
     <div class="container mx-auto px-4 py-12 max-w-7xl">
         <!-- 在 container div 的开头添加语言切换器和主题切换按钮 -->
         <div class="absolute top-4 right-4 flex items-center gap-4">
-            <button id="themeToggle" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
+            <button id="themeToggle" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-1 text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <i class="ri-sun-line dark:hidden"></i>
                 <i class="ri-moon-line hidden dark:block"></i>
             </button>
-            <select id="langSelect" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm dark:text-gray-300">
+            <select id="langSelect" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-1 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <option value="zh">中文</option>
                 <option value="en">English</option>
             </select>
@@ -51,26 +52,26 @@
 
         <!-- 修改标题部分 -->
         <div class="text-center mb-12">
-            <h1 data-i18n="title" class="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">魔法咒语解析</h1>
-            <p data-i18n="subtitle" class="text-gray-600 dark:text-gray-400">轻松提取AI生成图片的元数据信息</p>
+            <h1 data-i18n="title" class="text-4xl font-bold text-gray-900 dark:text-gray-50 mb-2">魔法咒语解析</h1>
+            <p data-i18n="subtitle" class="text-gray-600 dark:text-gray-300">轻松提取AI生成图片的元数据信息</p>
         </div>
         
         <!-- 修改上传区域 -->
-        <div id="dropZone" class="border-3 border-dashed border-blue-200 dark:border-blue-800 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white dark:bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-600">
-            <i class="ri-upload-cloud-2-line text-5xl text-blue-400 mb-4"></i>
-            <p data-i18n="dropzoneText" class="text-gray-600 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
-            <p data-i18n="dropzoneSubtext" class="text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
+        <div id="dropZone" class="border-3 border-dashed border-blue-200 dark:border-blue-500 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white dark:bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-400">
+            <i class="ri-upload-cloud-2-line text-5xl text-blue-400 dark:text-blue-300 mb-4"></i>
+            <p data-i18n="dropzoneText" class="text-gray-600 dark:text-gray-200 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
+            <p data-i18n="dropzoneSubtext" class="text-gray-400 dark:text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
             <input type="file" id="fileInput" class="hidden" accept="image/*">
         </div>
 
         <!-- 修改结果展示区域 -->
         <div id="result" class="hidden min-h-[80vh]">
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                     <!-- 左侧图片预览 -->
                     <div class="image-preview">
-                        <h3 data-i18n="previewTitle" class="text-xl font-semibold text-gray-800 mb-4">图片预览</h3>
-                        <div class="relative rounded-lg overflow-hidden bg-gray-50">
+                        <h3 data-i18n="previewTitle" class="text-xl font-semibold text-gray-800 dark:text-gray-50 mb-4">图片预览</h3>
+                        <div class="relative rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
                             <img id="previewImage" class="w-full h-auto object-contain max-h-[600px]" src="" alt="图片预览">
                         </div>
                     </div>
@@ -78,10 +79,68 @@
                     <!-- 右侧信息显示 -->
                     <div class="metadata-info">
                         <div class="flex items-center mb-6">
-                            <h3 data-i18n="detailsTitle" class="text-xl font-semibold text-gray-800">详细信息</h3>
+                            <h3 data-i18n="detailsTitle" class="text-xl font-semibold text-gray-800 dark:text-gray-50">详细信息</h3>
                         </div>
-                        <div id="metadata" class="space-y-4 text-gray-700">
-                            <!-- 每个提示词区域将包含自己的复制按钮 -->
+                        <div id="metadata" class="space-y-4">
+                            <!-- 生成器信息 -->
+                            <div id="generator-section" class="mb-4 hidden">
+                                <div class="font-medium text-gray-700 dark:text-gray-200" data-i18n="generator"></div>
+                                <div id="generator-content" class="text-gray-600 dark:text-gray-300"></div>
+                            </div>
+
+                            <!-- 分辨率信息 -->
+                            <div id="dimensions-section" class="mb-4 hidden">
+                                <div class="font-medium text-gray-700 dark:text-gray-200" data-i18n="dimensions"></div>
+                                <div id="dimensions-content" class="text-gray-600 dark:text-gray-300"></div>
+                            </div>
+
+                            <!-- 模型信息 -->
+                            <div id="model-section" class="mb-4 hidden">
+                                <div class="font-medium text-gray-700 dark:text-gray-200" data-i18n="model"></div>
+                                <div class="flex justify-between items-center">
+                                    <div id="model-content" class="text-gray-600 dark:text-gray-300"></div>
+                                    <a id="model-link" href="#" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline ml-4" data-i18n="findModel"></a>
+                                </div>
+                            </div>
+
+                            <!-- 采样设置 -->
+                            <div id="sampling-section" class="mb-4 hidden">
+                                <div class="font-medium text-gray-700 dark:text-gray-200" data-i18n="samplingSettings"></div>
+                                <div class="text-gray-600 grid grid-cols-2 gap-4 dark:text-gray-300">
+                                    <div id="sampler-content" class="hidden">
+                                        <span data-i18n="sampler"></span>: 
+                                        <span id="sampler-value" class="text-gray-600 dark:text-gray-300"></span>
+                                    </div>
+                                    <div id="scheduler-content" class="hidden">
+                                        <span data-i18n="scheduler"></span>: 
+                                        <span id="scheduler-value" class="text-gray-600 dark:text-gray-300"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 提示词 -->
+                            <div id="prompt-section" class="mb-4 hidden">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-gray-700 dark:text-gray-200" data-i18n="positivePrompt"></span>
+                                    <button id="copy-prompt" class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
+                                        <i class="ri-file-copy-line mr-1"></i>
+                                        <span data-i18n="copy" id="default-message"></span>
+                                        <span data-i18n="copied" id="success-message" class="hidden"></span>
+                                    </button>
+                                </div>
+                                <p id="prompt-content" class="text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-950 p-3 rounded-lg"></p>
+                            </div>
+                            <div id="negative-prompt-section" class="mb-4 hidden">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium text-gray-700 dark:text-gray-200" data-i18n="negativePrompt"></span>
+                                    <button id="copy-negative-prompt" class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
+                                        <i class="ri-file-copy-line mr-1"></i>
+                                        <span data-i18n="copy" id="default-message"></span>
+                                        <span data-i18n="copied" id="success-message" class="hidden"></span>
+                                    </button>
+                                </div>
+                                <p id="negative-prompt-content" class="text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-950 p-3 rounded-lg"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -89,10 +148,12 @@
                 <!-- JSON预览区域 -->
                 <div class="mt-8">
                     <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
-                        <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800">完整元数据</h3>
+                        <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800 dark:text-gray-50">完整元数据</h3>
                     </div>
                     <div id="jsonViewer">
-                        <pre class="w-full bg-gray-50 p-4 rounded-lg"><code class="language-json whitespace-pre-wrap break-words" id="jsonContent"></code></pre>
+                        <pre class="w-full bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                            <code class="text-gray-900 dark:text-gray-100 language-json whitespace-pre-wrap break-words" id="jsonContent"></code>
+                        </pre>
                     </div>
                 </div>
             </div>
