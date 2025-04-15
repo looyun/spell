@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>魔法咒语解析 - NovelAI | ComfyUI | Stable Diffussion | NAI | 画师串 | 画风串 | prompt | tag</title>
     <!-- 调整顺序：先加载 highlight.js 的样式，然后是其他样式 -->
-    <link href="node_modules/tailwindcss/dist/tailwind.css" rel="stylesheet">
     <link href="node_modules/highlight.js/styles/github.css" rel="stylesheet" media="(prefers-color-scheme: light)">
     <link href="node_modules/highlight.js/styles/github-dark.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
     <link href="node_modules/remixicon/fonts/remixicon.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
     <link href="dist/output.css" rel="stylesheet">
     <script>
         // 在页面加载时立即检查主题，避免闪烁
@@ -57,7 +55,7 @@
         </div>
         
         <!-- 修改上传区域 -->
-        <div id="dropZone" class="border-3 border-dashed border-blue-200 dark:border-blue-500 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white dark:bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-400">
+        <div id="dropZone" class="border-4 border-dashed border-blue-200 dark:border-blue-500 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white dark:bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-400">
             <i class="ri-upload-cloud-2-line text-5xl text-blue-400 dark:text-blue-300 mb-4"></i>
             <p data-i18n="dropzoneText" class="text-gray-600 dark:text-gray-200 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
             <p data-i18n="dropzoneSubtext" class="text-gray-400 dark:text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>

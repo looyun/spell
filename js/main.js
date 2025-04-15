@@ -20,15 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('theme', 'light');
         }
     }
-
-    // 初始化主题状态
-    const savedTheme = localStorage.getItem('theme');
-    updateTheme(savedTheme === 'dark');
-
     // 主题切换按钮点击事件
     themeToggle.addEventListener('click', () => {
-        const isDark = document.documentElement.classList.contains('dark');
-        updateTheme(!isDark);
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
 
     const dropZone = document.getElementById('dropZone');
