@@ -11,6 +11,28 @@ function updateI18n() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 主题切换功能
+    const themeToggle = document.getElementById('themeToggle');
+    
+    function updateTheme(dark) {
+        if (dark) {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        }
+    }
+
+    // 初始化主题状态
+    updateTheme(false);
+
+    // 主题切换按钮点击事件
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        updateTheme(!isDark);
+    });
+
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const result = document.getElementById('result');
@@ -246,21 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // 使用 highlight.js 的正确方法
         if (hljs) {
             hljs.highlightAll();
-        }
-
-        // JSON 显示切换 - 简化版本
-        const toggleJsonBtn = document.getElementById('toggleJson');
-        const jsonViewer = document.getElementById('jsonViewer');
-        
-        toggleJsonBtn.removeEventListener('click', toggleJson);
-        toggleJsonBtn.addEventListener('click', toggleJson);
-        
-        function toggleJson() {
-            if (jsonViewer.classList.contains('hidden')) {
-                jsonViewer.classList.remove('hidden');
-            } else {
-                jsonViewer.classList.add('hidden');
-            }
         }
     }
 });

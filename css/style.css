@@ -1,3 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 添加暗色模式过渡效果 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .hidden {
     display: none;
 }

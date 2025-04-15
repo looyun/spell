@@ -8,6 +8,14 @@
     <link href="node_modules/tailwindcss/dist/tailwind.css" rel="stylesheet">
     <link href="node_modules/remixicon/fonts/remixicon.css" rel="stylesheet">
     <link href="node_modules/highlight.js/styles/github.css" rel="stylesheet">
+    <script>
+        // 在页面加载时立即检查主题，避免闪烁
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <script type="module">
         // 引入 JS
         import hljs from 'highlight.js'
@@ -15,43 +23,48 @@
     </script>
     <script type="module" src="/js/main.js"></script>
     <link href="css/style.css" rel="stylesheet">
+    <link href="dist/output.css" rel="stylesheet">
     <script src="lib/exif-reader.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen relative">
-    <!-- 全局拖拽提示 -->
-    <div id="globalDropZone" class="fixed inset-0 bg-blue-500 bg-opacity-10 backdrop-filter backdrop-blur-sm z-50 hidden items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl text-center">
-            <i class="ri-upload-cloud-2-line text-6xl text-blue-500 mb-4"></i>
-            <p class="text-xl font-semibold text-gray-800">松开鼠标上传图片</p>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 min-h-screen relative">
+    <!-- 修改全局拖拽提示 -->
+    <div id="globalDropZone" class="fixed inset-0 bg-blue-500 dark:bg-blue-900 bg-opacity-10 backdrop-filter backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl text-center">
+            <i class="ri-upload-cloud-2-line text-6xl text-blue-500 dark:text-blue-400 mb-4"></i>
+            <p class="text-xl font-semibold text-gray-800 dark:text-gray-200">松开鼠标上传图片</p>
         </div>
     </div>
 
     <div class="container mx-auto px-4 py-12 max-w-7xl">
-        <!-- 在 container div 的开头添加语言切换器 -->
-        <div class="absolute top-4 right-4">
-            <select id="langSelect" class="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm">
+        <!-- 在 container div 的开头添加语言切换器和主题切换按钮 -->
+        <div class="absolute top-4 right-4 flex items-center gap-4">
+            <button id="themeToggle" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                <i class="ri-sun-line block dark:hidden"></i>
+                <i class="ri-moon-line hidden dark:block"></i>
+            </button>
+            <select id="langSelect" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm dark:text-gray-300">
                 <option value="zh">中文</option>
                 <option value="en">English</option>
             </select>
         </div>
 
-        <!-- 标题部分 -->
+        <!-- 修改标题部分 -->
         <div class="text-center mb-12">
-            <h1 data-i18n="title" class="text-4xl font-bold text-gray-800 mb-2">魔法咒语解析</h1>
-            <p data-i18n="subtitle" class="text-gray-600">轻松提取AI生成图片的元数据信息</p>
+            <h1 data-i18n="title" class="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">魔法咒语解析</h1>
+            <p data-i18n="subtitle" class="text-gray-600 dark:text-gray-400">轻松提取AI生成图片的元数据信息</p>
         </div>
         
-        <!-- 上传区域 -->
-        <div id="dropZone" class="border-3 border-dashed border-blue-200 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white bg-opacity-50 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400">
+        <!-- 修改上传区域 -->
+        <div id="dropZone" class="border-3 border-dashed border-blue-200 dark:border-blue-800 rounded-xl p-12 text-center cursor-pointer mb-8 bg-white dark:bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-sm transition-all duration-300 hover:border-blue-400 dark:hover:border-blue-600">
             <i class="ri-upload-cloud-2-line text-5xl text-blue-400 mb-4"></i>
             <p data-i18n="dropzoneText" class="text-gray-600 text-lg mb-2">点击上传或将图片拖到页面任意位置</p>
             <p data-i18n="dropzoneSubtext" class="text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
             <input type="file" id="fileInput" class="hidden" accept="image/*">
         </div>
 
-        <!-- 结果展示区域 -->
+        <!-- 修改结果展示区域 -->
         <div id="result" class="hidden min-h-[80vh]">
-            <div class="bg-white rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-100 dark:border-gray-700">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                     <!-- 左侧图片预览 -->
                     <div class="image-preview">
