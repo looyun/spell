@@ -63,7 +63,7 @@
             <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8" style="height: 800px">
                     <!-- 左侧图片预览 -->
-                    <div class="image-preview w-full h-full max-h-full flex flex-col min-h-0 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="image-preview w-full h-full max-h-full flex flex-col min-h-0 rounded-lg bg-gray-100 dark:bg-gray-900">
                         <div class="relative rounded-lg overflow-hidden flex-1 flex items-center justify-center min-h-0">
                             <img id="previewImage" class="max-w-full max-h-full w-auto h-auto object-contain" src="" alt="图片预览" style="max-width:100%;max-height:100%;">
                         </div>
@@ -115,16 +115,16 @@
                             <div id="generation-section" class="mb-4 hidden">
                                 <div class="font-medium text-gray-700 dark:text-gray-200" data-i18n="generationSettings">
                                 </div>
-                                <div class="text-gray-600 grid grid-cols-3 gap-4 dark:text-gray-300">
-                                    <div id="cfg-content" class="hidden">
+                                <div class="text-gray-600 grid grid-cols-4 gap-4 dark:text-gray-300">
+                                    <div id="cfg-content" class="hidden col-span-1">
                                         <span data-i18n="cfg"></span>:
                                         <span id="cfg-value" class="text-gray-600 dark:text-gray-300"></span>
                                     </div>
-                                    <div id="steps-content" class="hidden">
+                                    <div id="steps-content" class="hidden col-span-1">
                                         <span data-i18n="steps"></span>:
                                         <span id="steps-value" class="text-gray-600 dark:text-gray-300"></span>
                                     </div>
-                                    <div id="seed-content" class="hidden">
+                                    <div id="seed-content" class="hidden col-span-2">
                                         <span data-i18n="seed"></span>:
                                         <span id="seed-value" class="text-gray-600 dark:text-gray-300"></span>
                                     </div>

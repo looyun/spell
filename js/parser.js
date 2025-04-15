@@ -100,7 +100,7 @@ class ImageParser {
     }
 
     detectGenerator(tags) {
-        
+
         // ComfyUI 特征: 包含 prompt 和 workflow
         if (tags.prompt && tags.workflow) {
             return 'ComfyUI';
@@ -110,7 +110,7 @@ class ImageParser {
         if (tags.parameters || tags.Parameters) {
             return 'NovelAI';
         }
-        
+
         return 'Unknown';
     }
 
@@ -127,7 +127,7 @@ class ImageParser {
             console.log('解析到的config:', config);
             lastLine.split(',').forEach(param => {
                 // 只分割第一个冒号
-                const [key, value] = param.split(':',2).map(p => p.trim());
+                const [key, value] = param.split(':', 2).map(p => p.trim());
                 if (key && value) {
                     result[key] = value;
                 }
@@ -136,10 +136,10 @@ class ImageParser {
             return {
                 model: result['Model'] || 'Unknown',
                 cfg: result['CFG scale'] || '',
-                steps: result['Steps']  || '',
-                seed: result['Seed']  || '',
-                sampler: result['Sampler']  || '',
-                scheduler: result['Schedule type']  || '',
+                steps: result['Steps'] || '',
+                seed: result['Seed'] || '',
+                sampler: result['Sampler'] || '',
+                scheduler: result['Schedule type'] || '',
                 negativePrompt: lines.pop() || '',
                 positivePrompt: lines || '',
             };
@@ -150,7 +150,7 @@ class ImageParser {
 
     // 修改 parseComfyUI 方法以保存完整 workflow
     parseComfyUI(exif) {
-        
+
         try {
             const prompts = this.parseComfyUIPrompts(exif);
             const workflowData = JSON.parse(exif.workflow?.description || '{}');
@@ -164,7 +164,7 @@ class ImageParser {
 
 
     parseComfyUIPrompts(exif) {
-        
+
         try {
 
             // 修复NaN问题
@@ -181,17 +181,22 @@ class ImageParser {
             var unetNode = null;
             var positivePromptNode = null;
             var negativePromptNode = null;
-            var clipTextEncodeKeys = null;
+            var clipTextEncodeKeys = [];
 
-            // samplerNodeType: KSampler (Efficient)| KSamplerSelect|BasicScheduler|KSampler|
+            // SamplerCustomAdvanced = sampler + sigmas(scheduler) + guider(prompt)
+
+            // samplerNodeType: KSampler (Efficient)| KSamplerSelect|BasicScheduler|KSampler
             // checkPointNodeType: easy a1111Loader | CheckpointLoaderSimple|
             // unetNodeType: UNETLoader
-            // positivePromptNodeType: WeiLinComfyUIPromptAllInOneGreat | CLIPTextEncode|
-            // negativePromptNodeType: WeiLinComfyUIPromptAllInOneNeg | CLIPTextEncode|
+            // positivePromptNodeType: WeiLinComfyUIPromptAllInOneGreat | CLIPTextEncode| smZ CLIPTextEncode
+            // negativePromptNodeType: WeiLinComfyUIPromptAllInOneNeg | CLIPTextEncode| smZ CLIPTextEncode
             for (const key in data) {
                 if (data[key]?.inputs) {
-                    if (data[key].class_type === 'KSampler' || data[key].class_type === 'KSampler (Efficient)' || data[key].class_type === 'KSamplerSelect' || data[key].class_type === 'BasicScheduler') {
-                        samplerNode= data[key].inputs;
+                    if (data[key].class_type === 'KSampler' || data[key].class_type === 'KSampler (Efficient)' || 
+                        data[key].class_type === 'KSamplerSelect' || data[key].class_type === 'BasicScheduler') {
+                        if (samplerNode == null) {
+                            samplerNode = data[key].inputs;
+                        }
                     } else if (data[key].class_type === 'CheckpointLoaderSimple' || data[key].class_type === 'easy a1111Loader') {
                         checkPointNode = data[key].inputs;
                     } else if (data[key].class_type === 'UNETLoader') {
@@ -200,22 +205,22 @@ class ImageParser {
                         positivePromptNode = data[key].inputs;
                     } else if (data[key].class_type === 'WeiLinComfyUIPromptAllInOneNeg') {
                         negativePromptNode = data[key].inputs;
-                    } else if (data[key].class_type === 'CLIPTextEncode') {
-                        clipTextEncodeKeys += key;
+                    } else if (data[key].class_type === 'CLIPTextEncode' || data[key].class_type === 'smZ CLIPTextEncode') {
+                        clipTextEncodeKeys.push(key);
                     }
                 }
             }
             // 从checkpoint或者unet节点中根据inputs.positive数组或者inputs.negative数组获取正向和负向提示
             if (samplerNode && samplerNode.positive) {
-                for (const key in clipTextEncodeKeys) {
-                    if (key ===  samplerNode.positive[0]) {
-                        // 递归获取inputs，以比较key
+                clipTextEncodeKeys.forEach(key => {
+                    if (key === samplerNode.positive[0]) {
+                        // TODO 递归获取inputs，以比较key
                         positivePromptNode = data[key].inputs;
                     }
-                    if (key ===  samplerNode.negative[0]) {
+                    if (key === samplerNode.negative[0]) {
                         negativePromptNode = data[key].inputs;
                     }
-                }
+                })
             }
             return {
                 model: checkPointNode?.ckpt_name || unetNode?.unet_name || 'Unknown',
@@ -235,7 +240,7 @@ class ImageParser {
 
 
     parseComfyUIWorkflow(workflowDescription) {
-        
+
         try {
             const data = JSON.parse(workflowDescription.description || '{}');
             return data;
@@ -248,11 +253,11 @@ class ImageParser {
     parseStableDiffusion(tags) {
         // Stable Diffusion 通常在 parameters 中存储信息
         const params = tags.parameters?.description || '';
-        
+
         // 解析常见的 SD 格式
         const positivePrompt = params.split('Negative prompt:')[0].trim();
         const negativePrompt = params.split('Negative prompt:')[1]?.split('Steps:')[0]?.trim() || '';
-        
+
         return {
             model: 'Stable Diffusion',
             positivePrompt,
@@ -264,7 +269,7 @@ class ImageParser {
 
     extractSDParameters(params) {
         const result = {};
-        
+
         // 提取常见参数
         const patterns = {
             'Steps': /Steps: (\d+)/,
@@ -289,7 +294,7 @@ class ImageParser {
     parseParameters(paramString) {
         const params = {};
         const pairs = paramString.split(',').map(p => p.trim());
-        
+
         pairs.forEach(pair => {
             const [key, value] = pair.split(':').map(p => p.trim());
             if (key && value) {
