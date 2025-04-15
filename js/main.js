@@ -1,6 +1,3 @@
-import 'tailwindcss/dist/tailwind.css'
-import 'remixicon/fonts/remixicon.css'
-import 'highlight.js/styles/github.css'
 import { t, getCurrentLang, setLanguage } from './i18n.js';
 
 function updateI18n() {
@@ -17,15 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTheme(dark) {
         if (dark) {
             document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
+            localStorage.setItem('theme', 'dark');
         } else {
             document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
+            localStorage.setItem('theme', 'light');
         }
     }
 
     // 初始化主题状态
-    updateTheme(false);
+    const savedTheme = localStorage.getItem('theme');
+    updateTheme(savedTheme === 'dark');
 
     // 主题切换按钮点击事件
     themeToggle.addEventListener('click', () => {

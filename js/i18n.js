@@ -21,7 +21,6 @@ export const languages = {
         parameters: '参数设置',
         workflow: '完整工作流',
         fullMetadata: '完整元数据',
-        toggleJson: '显示/隐藏 JSON',
         copy: '复制',
         copied: '已复制'
     },
@@ -47,7 +46,6 @@ export const languages = {
         parameters: 'Parameters',
         workflow: 'Complete Workflow',
         fullMetadata: 'Full Metadata',
-        toggleJson: 'Toggle JSON',
         copy: 'Copy',
         copied: 'Copied'
     }

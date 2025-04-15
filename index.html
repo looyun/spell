@@ -10,7 +10,8 @@
     <link href="node_modules/highlight.js/styles/github.css" rel="stylesheet">
     <script>
         // 在页面加载时立即检查主题，避免闪烁
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
@@ -39,7 +40,7 @@
         <!-- 在 container div 的开头添加语言切换器和主题切换按钮 -->
         <div class="absolute top-4 right-4 flex items-center gap-4">
             <button id="themeToggle" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                <i class="ri-sun-line block dark:hidden"></i>
+                <i class="ri-sun-line dark:hidden"></i>
                 <i class="ri-moon-line hidden dark:block"></i>
             </button>
             <select id="langSelect" class="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-1 text-sm dark:text-gray-300">
@@ -89,10 +90,6 @@
                 <div class="mt-8">
                     <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
                         <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800">完整元数据</h3>
-                        <button id="toggleJson" data-i18n="toggleJson" class="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200">
-                            <i class="ri-code-line mr-2"></i>
-                            显示/隐藏 JSON
-                        </button>
                     </div>
                     <div id="jsonViewer">
                         <pre class="w-full bg-gray-50 p-4 rounded-lg"><code class="language-json whitespace-pre-wrap break-words" id="jsonContent"></code></pre>
