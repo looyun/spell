@@ -163,6 +163,17 @@ class ImageParser {
         }
     }
 
+    // 递归获取prompt
+    getPrompt(node, datas){
+        if (node.class_type === 'CLIPTextEncode' || node.class_type === 'smZ CLIPTextEncode') {
+            return node
+        }
+        if (node.inputs?.conditioning){
+            const key = node.inputs.conditioning[0]
+            return this.getPrompt(datas[key],datas)
+        }
+    }
+
 
     parseComfyUIPrompts(exif) {
 
@@ -177,12 +188,12 @@ class ImageParser {
 
 
             // 处理不同节点类型
-            var samplerNode = null;
-            var checkPointNode = null;
-            var unetNode = null;
-            var positivePromptNode = null;
-            var negativePromptNode = null;
-            var clipTextEncodeKeys = [];
+            var samplerInput = null;
+            var schedulerInput = null;
+            var checkPointInput = null;
+            var unetInput = null;
+            var positivePromptInput = null;
+            var negativePromptInput = null;
 
             // SamplerCustomAdvanced = sampler + sigmas(scheduler) + guider(prompt)
 
@@ -193,48 +204,55 @@ class ImageParser {
             // negativePromptNodeType: WeiLinComfyUIPromptAllInOneNeg | CLIPTextEncode| smZ CLIPTextEncode
             for (const key in data) {
                 if (data[key]?.inputs) {
-                    if (data[key].class_type === 'KSampler' || data[key].class_type === 'KSampler (Efficient)' || 
-                        data[key].class_type === 'KSamplerSelect' || data[key].class_type === 'BasicScheduler') {
-                        if (samplerNode == null) {
-                            samplerNode = data[key].inputs;
+                    if (data[key].class_type === 'KSampler' || data[key].class_type === 'KSampler (Efficient)' || data[key].class_type === 'BasicScheduler') {
+                        if (samplerInput == null && data[key].inputs.sampler_name) {
+                            samplerInput = data[key].inputs;
                         }
+                        if (schedulerInput == null && data[key].inputs.scheduler) {
+                            schedulerInput = data[key].inputs;
+                        }
+                    } else if (data[key].class_type === 'SamplerCustomAdvanced') {
+                        if (samplerInput == null) {
+                            samplerInput = data[data[key].inputs.sampler[0]].inputs;
+                        }
+                        if (schedulerInput == null) {
+                            schedulerInput = data[data[key].inputs.sigmas[0]].inputs;
+                        }
+                        if (positivePromptInput == null) {
+                            positivePromptInput = this.getPrompt(data[data[key].inputs.guider[0]],data).inputs;
+                        }
+
                     } else if (data[key].class_type === 'CheckpointLoaderSimple' || data[key].class_type === 'easy a1111Loader') {
-                        checkPointNode = data[key].inputs;
+                        checkPointInput = data[key].inputs;
                     } else if (data[key].class_type === 'UNETLoader') {
-                        unetNode = data[key].inputs;
+                        unetInput = data[key].inputs;
                     } else if (data[key].class_type === 'WeiLinComfyUIPromptAllInOneGreat') {
-                        positivePromptNode = data[key].inputs;
+                        positivePromptInput = data[key].inputs;
                     } else if (data[key].class_type === 'WeiLinComfyUIPromptAllInOneNeg') {
-                        negativePromptNode = data[key].inputs;
-                    } else if (data[key].class_type === 'CLIPTextEncode' || data[key].class_type === 'smZ CLIPTextEncode') {
-                        clipTextEncodeKeys.push(key);
+                        negativePromptInput = data[key].inputs;
                     }
                 }
             }
             // 从checkpoint或者unet节点中根据inputs.positive数组或者inputs.negative数组获取正向和负向提示
-            if (samplerNode && samplerNode.positive) {
-                clipTextEncodeKeys.forEach(key => {
-                    if (key === samplerNode.positive[0]) {
-                        // TODO 递归获取inputs，以比较key
-                        positivePromptNode = data[key].inputs;
-                    }
-                    if (key === samplerNode.negative[0]) {
-                        negativePromptNode = data[key].inputs;
-                    }
-                })
+            if (positivePromptInput == null && samplerInput && samplerInput.positive) {
+                const promptNode = this.getPrompt(data[samplerInput.positive[0]],data)
+                if (promptNode){
+                    positivePromptInput = promptNode.inputs;
+                }
+                negativePromptInput = this.getPrompt(data[samplerInput.negative[0]],data).inputs
             }
-            const positivePrompt = positivePromptNode?.text || positivePromptNode?.positive || '';
+            const positivePrompt = positivePromptInput?.text || positivePromptInput?.positive || '';
             return {
-                model: checkPointNode?.ckpt_name || unetNode?.unet_name || 'Unknown',
-                cfg: samplerNode?.cfg || '',
-                steps: samplerNode?.steps || '',
-                seed: samplerNode?.seed || '',
-                sampler: samplerNode?.sampler_name || '',
-                scheduler: samplerNode?.scheduler || '',
+                model: checkPointInput?.ckpt_name || unetInput?.unet_name || 'Unknown',
+                cfg: samplerInput?.cfg || '',
+                steps: schedulerInput?.steps || '',
+                seed: samplerInput?.seed || '',
+                sampler: samplerInput?.sampler_name || '',
+                scheduler: schedulerInput?.scheduler || '',
                 positivePrompt: positivePrompt,
                 artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
                 charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
-                negativePrompt: negativePromptNode?.text || negativePromptNode?.negative || '',
+                negativePrompt: negativePromptInput?.text || negativePromptInput?.negative || '',
             };
         } catch (error) {
             console.error('解析ComfyUI提示失败:', error);

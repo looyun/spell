@@ -153,13 +153,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 更新模型信息
         if (metadata.model) {
             toggleSection('model', metadata.model);
+            // 删除后缀
+            var keyword = metadata.model.trim().split('.')[0];
+            // 将字符串分割
+            keyword = keyword.replace(/([vV])([0-9])/g, ' $1$2');
+            keyword = keyword.replace(/([a-z])([A-Z])/g, '$1 $2');
+            keyword = keyword.replace('_', ' ');
             const modelLink = document.getElementById('model-link');
-            modelLink.href = `https://civitai.com/search/models?query=${metadata.model}`;
+            modelLink.href = `https://civitai.com/search/models?modelType=Checkpoint&query=${keyword}`;
         }
 
         // 更新采样设置
         if (metadata.sampler || metadata.scheduler) {
-            document.getElementById('sampling-section').classList.remove('hidden');
 
             if (metadata.sampler) {
                 document.getElementById('sampler-content').classList.remove('hidden');
@@ -174,8 +179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 document.getElementById('scheduler-content').classList.add('hidden');
             }
-        } else {
-            document.getElementById('sampling-section').classList.add('hidden');
         }
 
         // 更新 CFG 和步数和种子
@@ -253,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 辅助函数：显示/隐藏区域并更新内容
+    // 显示/隐藏区域并更新内容
     function toggleSection(id, content) {
         if (!content) {
             section.classList.add('hidden');
@@ -266,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         contentEl.textContent = content;
     }
 
-    // 复制按钮事件处理可以集中管理
+    // 复制按钮事件处理
     document.querySelectorAll('.copy-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const content = btn.dataset.content;
