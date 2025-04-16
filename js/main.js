@@ -44,36 +44,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初始化时更新一次
     updateI18n();
 
-    // 拖拽处理
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('dragover');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('dragover');
-    });
-
-    dropZone.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        try {
-            const file = e.dataTransfer.files[0];
-            if (!file) {
-                console.warn('No file found in drop event');
-                return;
-            }
-            if (!file.type.startsWith('image/')) {
-                console.warn('Dropped file is not an image:', file.type);
-                return;
-            }
-            await processImage(file);
-        } catch (error) {
-            console.error('Error handling drop:', error);
-            alert(t('upload_failed'));
-        }
-    });
-
     // 点击上传
     dropZone.addEventListener('click', () => {
         fileInput.click();
@@ -105,8 +75,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         globalDropZone.classList.remove('active');
 
         try {
-            const file = e.dataTransfer.files[0];
+            let file;
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                file = e.dataTransfer.files[0];
+            } else if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+                const item = e.dataTransfer.items[0];
+                if (item.kind === 'file') {
+                    file = item.getAsFile();
+                }
+            } 
+            
             if (!file) {
+                // Firefox限制跨标签页文件拖拽
+                if (navigator.userAgent.toLowerCase().includes('firefox')) {
+                    alert(t('firefox_cross_tab_drag_not_supported'));
+                    return;
+                }
                 console.warn('No file found in global drop event');
                 return;
             }

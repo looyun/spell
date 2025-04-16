@@ -19,7 +19,9 @@ export const languages = {
         workflow: '完整工作流',
         fullMetadata: '完整元数据',
         copy: '复制',
-        copied: '已复制'
+        copied: '已复制',
+        firefox_cross_tab_drag_not_supported: 'Firefox不支持跨标签页拖拽文件，请使用文件选择或拖拽本地文件',
+        upload_failed: '上传失败'
     },
     en: {
         title: 'AI Image Spell Parser',
@@ -41,7 +43,9 @@ export const languages = {
         workflow: 'Complete Workflow',
         fullMetadata: 'Full Metadata',
         copy: 'Copy',
-        copied: 'Copied'
+        copied: 'Copied',
+        firefox_cross_tab_drag_not_supported: 'Firefox does not support cross-tab file dragging, please use file selection or drag local files',
+        upload_failed: 'Upload failed'
     }
 };
 

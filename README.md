@@ -3,6 +3,8 @@
 ## TODO
 
   - [ ] LoRA模型列表
+  - [ ] firefox不支持网页图片拖拽
+  - [ ] ~~chromr 不支持部分目录的本地图片拖拽 ~~flatpak限制
 
 ## 贡献指南
 
