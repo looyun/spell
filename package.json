@@ -1,4 +1,5 @@
 {
+  "homepage": "https://looyun.github.io/spell",
   "name": "spell",
   "private": true,
   "version": "1.0.0",
@@ -8,12 +9,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "gh-pages -d dist",
     "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "highlight.js": "^11.11.1",
     "vite": "^6.2.6"
   },
