@@ -5,5 +5,8 @@ module.exports = {
     './js/**/*.js',
     './css/**/*.css'
   ],
+  plugins: [
+    require('tailwind-scrollbar')
+  ],
   // ...其他配置...
 };

@@ -23,6 +23,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.4",
     "exifreader": "^4.28.1",
-    "remixicon": "^4.6.0"
+    "remixicon": "^4.6.0",
+    "tailwind-scrollbar": "^4.0.2"
   }
 }
