@@ -19,7 +19,7 @@ yarn.lock
 .DS_Store
 
 # Build output
-# dist/
+dist/
 build/
 coverage/
 
