@@ -50,3 +50,23 @@
 #copyBtn:hover {
     transform: translateY(-1px);
 }
+
+.highlight-character {
+    background-color: rgba(255, 182, 193, 0.3); /* 浅粉色 */
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+.highlight-artist {
+    background-color: rgba(144, 238, 144, 0.3); /* 浅绿色 */
+    border-radius: 2px;
+    padding: 0 2px;
+}
+
+.dark .highlight-character {
+    background-color: rgba(255, 182, 193, 0.2);
+}
+
+.dark .highlight-artist {
+    background-color: rgba(144, 238, 144, 0.2);
+}

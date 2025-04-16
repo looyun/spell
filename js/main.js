@@ -1,6 +1,7 @@
 import { t, getCurrentLang, setLanguage } from './i18n.js';
 import ImageParser from './parser.js';
 import hljs from 'highlight.js'
+import { globalMatchers } from './matchers.js';
 
 window.hljs = hljs
 
@@ -12,7 +13,15 @@ function updateI18n() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await globalMatchers.initialize();
+        // 继续其他初始化操作...
+    } catch (error) {
+        console.error('初始化失败:', error);
+        // 处理初始化失败的情况
+    }
+
     // 主题切换功能
     const themeToggle = document.getElementById('themeToggle');
     themeToggle.addEventListener('click', () => {
@@ -197,7 +206,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // 更新提示词
         if (metadata.positivePrompt) {
             document.getElementById('prompt-section').classList.remove('hidden');
-            document.getElementById('prompt-content').textContent = metadata.positivePrompt;
+            const promptContainer = document.getElementById('prompt-content');
+            
+            // 对提示词进行高亮处理
+            let highlightedText = metadata.positivePrompt;
+            metadata.charaterMatches?.forEach(match => {
+                const escapedWord = match.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(?<!\\w)${escapedWord}(?!\\w)`, 'gi');
+                highlightedText = highlightedText.replace(regex, match => 
+                    `<span class="highlight-character">${match}</span>`
+                );
+            });
+
+            metadata.artistMatches?.forEach(match => {
+                const escapedWord = match.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(?<!\\w)${escapedWord}(?!\\w)`, 'gi');
+                highlightedText = highlightedText.replace(regex, match => 
+                    `<span class="highlight-artist">${match}</span>`
+                );
+            });
+            
+            // 使用innerHTML设置高亮后的内容
+            promptContainer.innerHTML = highlightedText;
+            
             const copyPromptBtn = document.getElementById('copy-prompt');
             copyPromptBtn.dataset.content = metadata.positivePrompt;
         } else {

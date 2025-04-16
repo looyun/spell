@@ -1,5 +1,6 @@
-
 import ExifReader from 'exifreader';
+import { globalMatchers } from './matchers.js';
+
 class ImageParser {
     async parse(file) {
         try {
@@ -222,6 +223,7 @@ class ImageParser {
                     }
                 })
             }
+            const positivePrompt = positivePromptNode?.text || positivePromptNode?.positive || '';
             return {
                 model: checkPointNode?.ckpt_name || unetNode?.unet_name || 'Unknown',
                 cfg: samplerNode?.cfg || '',
@@ -229,7 +231,9 @@ class ImageParser {
                 seed: samplerNode?.seed || '',
                 sampler: samplerNode?.sampler_name || '',
                 scheduler: samplerNode?.scheduler || '',
-                positivePrompt: positivePromptNode?.text || positivePromptNode?.positive || '',
+                positivePrompt: positivePrompt,
+                artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
+                charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
                 negativePrompt: negativePromptNode?.text || negativePromptNode?.negative || '',
             };
         } catch (error) {
