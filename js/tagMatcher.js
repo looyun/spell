@@ -21,36 +21,30 @@ class TagMatcher {
         return normalizedTags;
     }
 
-    async loadTags(filePath) {
+    async loadTags(filePathOrContent) {
         if (this.tagsLoaded) return;
         
         try {
-            // 使用流式读取大文件
-            const response = await fetch(filePath);
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let buffer = '';
+            let content;
+            if (typeof filePathOrContent === 'string' && filePathOrContent.startsWith('http')) {
+                // 处理远程文件
+                const response = await fetch(filePathOrContent);
+                content = await response.text();
+            } else {
+                // 处理直接传入的内容或Vite导入的raw内容
+                content = filePathOrContent;
+            }
 
-            while (true) {
-                const {done, value} = await reader.read();
-                if (done) break;
-                
-                buffer += decoder.decode(value, {stream: true});
-                // 按行处理
-                const lines = buffer.split('\n');
-
-                for (const line of lines) {
-                    const words = line.split(',');
-                    for (const word of words) {
-                        const trimmedWord = word.trim();
-                        if (trimmedWord) {
-                            // 1. 标准化处理: 移除多余的转义和特殊字符
-                            const normalizedTags = this.normalizedTag(trimmedWord);
-
-                            // 将所有标准化后的标签添加到 trie 中
-                            for (const normalizedTag of normalizedTags) {
-                                this.trie.insert(normalizedTag);
-                            }
+            // 按行处理
+            const lines = content.split('\n');
+            for (const line of lines) {
+                const words = line.split(',');
+                for (const word of words) {
+                    const trimmedWord = word.trim();
+                    if (trimmedWord) {
+                        const normalizedTags = this.normalizedTag(trimmedWord);
+                        for (const normalizedTag of normalizedTags) {
+                            this.trie.insert(normalizedTag);
                         }
                     }
                 }

@@ -1,4 +1,7 @@
 import TagMatcher from './tagMatcher.js';
+import artistTagsContent from '../assets/artist.txt?raw';
+import characterTagsContent from '../assets/character.txt?raw';
+
 
 class GlobalMatchers {
     constructor() {
@@ -13,8 +16,8 @@ class GlobalMatchers {
         try {
             // 并行加载所有标签文件
             await Promise.all([
-                this.artistMatcher.loadTags('./assets/artist.txt'),
-                this.characterMatcher.loadTags('./assets/character.txt')
+                this.artistMatcher.loadTags(artistTagsContent),
+                this.characterMatcher.loadTags(characterTagsContent)
             ]);
             
             this.isInitialized = true;

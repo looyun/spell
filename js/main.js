@@ -57,9 +57,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     dropZone.addEventListener('drop', async (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
+        try {
+            const file = e.dataTransfer.files[0];
+            if (!file) {
+                console.warn('No file found in drop event');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                console.warn('Dropped file is not an image:', file.type);
+                return;
+            }
             await processImage(file);
+        } catch (error) {
+            console.error('Error handling drop:', error);
+            alert(t('upload_failed'));
         }
     });
 
@@ -93,11 +104,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         globalDropZone.classList.remove('active');
 
-        // 处理文件拖拽
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
+        try {
+            const file = e.dataTransfer.files[0];
+            if (!file) {
+                console.warn('No file found in global drop event');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                console.warn('Dropped file is not an image:', file.type);
+                return;
+            }
             await processImage(file);
-            return;
+        } catch (error) {
+            console.error('Error handling global drop:', error);
+            alert(t('upload_failed'));
         }
     });
 
