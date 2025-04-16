@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (item.kind === 'file') {
                     file = item.getAsFile();
                 }
-            } 
-            
+            }
+
             if (!file) {
                 // Firefox限制跨标签页文件拖拽
                 if (navigator.userAgent.toLowerCase().includes('firefox')) {
@@ -149,17 +149,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function displayMetadata(metadata) {
         // 更新生成器信息
-        toggleSection('generator', metadata.generator);
+        updateSection('generator', metadata.generator);
 
         // 更新分辨率信息
         if (metadata.dimensions) {
-            toggleSection('dimensions',
+            updateSection('dimensions',
                 `${metadata.dimensions.width} × ${metadata.dimensions.height}`);
+        } else {
+            document.getElementById('dimensions-section').classList.add('hidden');
         }
 
         // 更新模型信息
         if (metadata.model) {
-            toggleSection('model', metadata.model);
+            updateSection('model', metadata.model);
             // 删除后缀
             var keyword = metadata.model.trim().split('.')[0];
             // 将字符串分割
@@ -169,6 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const modelLink = document.getElementById('model-link');
             modelLink.href = `https://civitai.com/search/models?modelType=Checkpoint&query=${keyword}`;
             // TODO liblib https://www.liblib.art/search?keyword=AWPortrait-FL-fp8&type=text
+        } else {
+            document.getElementById('model-section').classList.add('hidden');
         }
 
         // 更新采样设置
@@ -218,13 +222,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (metadata.positivePrompt) {
             document.getElementById('prompt-section').classList.remove('hidden');
             const promptContainer = document.getElementById('prompt-content');
-            
+
             // 对提示词进行高亮处理
             let highlightedText = metadata.positivePrompt;
             metadata.charaterMatches?.forEach(match => {
                 const escapedWord = match.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const regex = new RegExp(`(?<!\\w)${escapedWord}(?!\\w)`, 'gi');
-                highlightedText = highlightedText.replace(regex, match => 
+                highlightedText = highlightedText.replace(regex, match =>
                     `<span class="highlight-character">${match}</span>`
                 );
             });
@@ -232,14 +236,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             metadata.artistMatches?.forEach(match => {
                 const escapedWord = match.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 const regex = new RegExp(`(?<!\\w)${escapedWord}(?!\\w)`, 'gi');
-                highlightedText = highlightedText.replace(regex, match => 
+                highlightedText = highlightedText.replace(regex, match =>
                     `<span class="highlight-artist">${match}</span>`
                 );
             });
-            
+
             // 使用innerHTML设置高亮后的内容
             promptContainer.innerHTML = highlightedText;
-            
+
             const copyPromptBtn = document.getElementById('copy-prompt');
             copyPromptBtn.dataset.content = metadata.positivePrompt;
         } else {
@@ -264,12 +268,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 显示/隐藏区域并更新内容
-    function toggleSection(id, content) {
-        if (!content) {
-            section.classList.add('hidden');
-            return
-        }
+    // 显示区域并更新内容
+    function updateSection(id, content) {
         const section = document.getElementById(`${id}-section`);
         const contentEl = document.getElementById(`${id}-content`);
 
