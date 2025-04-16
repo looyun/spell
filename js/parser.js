@@ -14,7 +14,7 @@ class ImageParser {
         } catch (error) {
             console.error('解析失败:', error);
             // 即使解析失败，也尝试返回原始数据
-            return 
+            return
         }
 
         // 将完整的原始标签数据添加到返回结果中
@@ -50,7 +50,7 @@ class ImageParser {
                     metadata = this.parseStableDiffusion(exif);
                     break;
                 default:
-                    metadata = {};
+                    metadata = this.parseGeneric(exif);
             }
 
             return {
@@ -107,31 +107,9 @@ class ImageParser {
         try {
             // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
             const params = exif.parameters?.description || '';
+            console.log('解析到的NovelAI参数:', params);
             const lines = params.split('\n');
-            console.log('解析到的NovelAI参数:', lines);
-            const result = {};
-            // 处理最后一行，假设它是 config
-            const lastLine = lines.pop();
-            const config = lastLine.split(',');
-            console.log('解析到的config:', config);
-            lastLine.split(',').forEach(param => {
-                // 只分割第一个冒号
-                const [key, value] = param.split(':', 2).map(p => p.trim());
-                if (key && value) {
-                    result[key] = value;
-                }
-            });
-            console.log('解析到的result:', result);
-            return {
-                model: result['Model'] || 'Unknown',
-                cfg: result['CFG scale'] || '',
-                steps: result['Steps'] || '',
-                seed: result['Seed'] || '',
-                sampler: result['Sampler'] || '',
-                scheduler: result['Schedule type'] || '',
-                negativePrompt: lines.pop() || '',
-                positivePrompt: lines || '',
-            };
+            return this.parseLines(lines);
         } catch (error) {
             return '{}';
         }
@@ -152,13 +130,13 @@ class ImageParser {
     }
 
     // 递归获取prompt
-    getPrompt(node, datas){
+    getPrompt(node, datas) {
         if (node.class_type === 'CLIPTextEncode' || node.class_type === 'smZ CLIPTextEncode') {
             return node
         }
-        if (node.inputs?.conditioning){
+        if (node.inputs?.conditioning) {
             const key = node.inputs.conditioning[0]
-            return this.getPrompt(datas[key],datas)
+            return this.getPrompt(datas[key], datas)
         }
     }
 
@@ -207,7 +185,7 @@ class ImageParser {
                             schedulerInput = data[data[key].inputs.sigmas[0]].inputs;
                         }
                         if (positivePromptInput == null) {
-                            positivePromptInput = this.getPrompt(data[data[key].inputs.guider[0]],data).inputs;
+                            positivePromptInput = this.getPrompt(data[data[key].inputs.guider[0]], data).inputs;
                         }
 
                     } else if (data[key].class_type === 'CheckpointLoaderSimple' || data[key].class_type === 'easy a1111Loader') {
@@ -223,11 +201,11 @@ class ImageParser {
             }
             // 从checkpoint或者unet节点中根据inputs.positive数组或者inputs.negative数组获取正向和负向提示
             if (positivePromptInput == null && samplerInput && samplerInput.positive) {
-                const promptNode = this.getPrompt(data[samplerInput.positive[0]],data)
-                if (promptNode){
+                const promptNode = this.getPrompt(data[samplerInput.positive[0]], data)
+                if (promptNode) {
                     positivePromptInput = promptNode.inputs;
                 }
-                negativePromptInput = this.getPrompt(data[samplerInput.negative[0]],data).inputs
+                negativePromptInput = this.getPrompt(data[samplerInput.negative[0]], data).inputs
             }
             const positivePrompt = positivePromptInput?.text || positivePromptInput?.positive || '';
             return {
@@ -260,9 +238,9 @@ class ImageParser {
     }
 
     // 修改 parseStableDiffusion 方法以包含完整参数字符串
-    parseStableDiffusion(tags) {
+    parseStableDiffusion(exif) {
         // Stable Diffusion 通常在 parameters 中存储信息
-        const params = tags.parameters?.description || '';
+        const params = exif.parameters?.description || '';
 
         // 解析常见的 SD 格式
         const positivePrompt = params.split('Negative prompt:')[0].trim();
@@ -275,6 +253,49 @@ class ImageParser {
             parameters: this.extractSDParameters(params),
             rawParameters: params // 保存完整的参数字符串
         };
+    }
+
+    parseGeneric(exif) {
+        if (exif) {
+            if (exif.UserComment?.value) {
+                const str = String.fromCharCode(null, ...exif.UserComment.value);
+                console.log('解析到UserComment:', str);
+                const lines = str.trim().split('\n').
+                    map(line => line.replace(/[\u0000-\u001F]/g, '')). // 去除控制字符
+                    filter(line => line.trim() !== ''); // 去除空行
+                return this.parseLines(lines);
+            }
+        }
+    }
+
+    parseLines(lines) {
+        try {
+            // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
+            const result = {};
+            // 处理最后一行，假设它是 config
+            const lastLine = lines.pop();
+            const config = lastLine.split(',');
+            console.log('解析到的config:', config);
+            lastLine.split(',').forEach(param => {
+                // 只分割第一个冒号
+                const [key, value] = param.split(':', 2).map(p => p.trim());
+                if (key && value) {
+                    result[key.trim()] = value.trim();
+                }
+            });
+            return {
+                model: result['Model'] || 'Unknown',
+                cfg: result['CFG scale'] || '',
+                steps: result['Steps'] || '',
+                seed: result['Seed'] || '',
+                sampler: result['Sampler'] || '',
+                scheduler: result['Schedule type'] || '',
+                negativePrompt: lines.pop() || '',
+                positivePrompt: lines || '',
+            };
+        } catch (error) {
+            return '{}';
+        }
     }
 
     extractSDParameters(params) {
