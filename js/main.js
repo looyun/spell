@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             keyword = keyword.replace('_', ' ');
             const modelLink = document.getElementById('model-link');
             modelLink.href = `https://civitai.com/search/models?modelType=Checkpoint&query=${keyword}`;
+            // TODO liblib https://www.liblib.art/search?keyword=AWPortrait-FL-fp8&type=text
         }
 
         // 更新采样设置
