@@ -3,14 +3,33 @@ import { globalMatchers } from './matchers.js';
 
 class ImageParser {
     async parse(file) {
+        var exif = null;
         try {
             if (!file.type.startsWith('image/')) {
                 throw new Error('请上传图片文件');
             }
 
-            const exif = await ExifReader.load(file);
+            exif = await ExifReader.load(file);
             console.log('解析到的EXIF:', exif);
+        } catch (error) {
+            console.error('解析失败:', error);
+            // 即使解析失败，也尝试返回原始数据
+            return 
+        }
 
+        // 将完整的原始标签数据添加到返回结果中
+        const rawMetadata = {};
+        // 转换ExifReader标签为普通对象
+        for (const [key, value] of Object.entries(exif)) {
+            if (value && typeof value === 'object') {
+                rawMetadata[key] = {
+                    description: value.description,
+                    value: value.value
+                };
+            }
+        }
+
+        try {
             // 获取图片分辨率
             const dimensions = await this.getImageDimensions(file);
 
@@ -34,18 +53,6 @@ class ImageParser {
                     metadata = {};
             }
 
-            // 将完整的原始标签数据添加到返回结果中
-            const rawMetadata = {};
-            // 转换ExifReader标签为普通对象
-            for (const [key, value] of Object.entries(exif)) {
-                if (value && typeof value === 'object') {
-                    rawMetadata[key] = {
-                        description: value.description,
-                        value: value.value
-                    };
-                }
-            }
-
             return {
                 generator,
                 dimensions,
@@ -57,27 +64,8 @@ class ImageParser {
             // 即使解析失败，也尝试返回原始数据
             return {
                 error: error.message,
-                rawTags: await this.getRawTags(file)
+                rawTags: rawMetadata
             };
-        }
-    }
-
-    // 新增：获取原始标签数据的辅助方法
-    async getRawTags(file) {
-        try {
-            const tags = await ExifReader.load(file);
-            const rawMetadata = {};
-            for (const [key, value] of Object.entries(tags)) {
-                if (value && typeof value === 'object') {
-                    rawMetadata[key] = {
-                        description: value.description,
-                        value: value.value
-                    };
-                }
-            }
-            return rawMetadata;
-        } catch (error) {
-            return { error: '无法读取原始元数据' };
         }
     }
 

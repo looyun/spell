@@ -123,11 +123,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function processImage(file) {
         try {
+            handleFile(file);
             const parser = new ImageParser();
             const metadata = await parser.parse(file);
             console.log('解析结果:', metadata);
+            if (!metadata) {
+                throw new Error('解析失败，请检查图片格式或内容');
+            }
             displayMetadata(metadata);
-            handleFile(file);
         } catch (error) {
             console.error('处理图片失败:', error);
             alert(error.message);

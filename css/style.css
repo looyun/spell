@@ -5,8 +5,8 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 添加暗色模式过渡效果 */
-* {
+/* Only transition color properties for dark mode */
+html {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -16,7 +16,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    will-change: transform;
 }
 
 #dropZone.dragover {
@@ -27,7 +28,8 @@
 #globalDropZone {
     display: none;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.15s ease;
+    will-change: opacity;
 }
 
 #globalDropZone.active {
