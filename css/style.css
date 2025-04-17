@@ -3,11 +3,20 @@
 @import 'highlight.js/styles/github.css';
 @import "remixicon/fonts/remixicon.css";
 
+@plugin 'tailwind-scrollbar';
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Only transition color properties for dark mode */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Prevent long words from causing horizontal overflow */
+#prompt-content,
+#negative-prompt-content,
+#jsonContent {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 #dropZone {

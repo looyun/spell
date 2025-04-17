@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     alert(t('firefox_cross_tab_drag_not_supported'));
                     return;
                 }
-                console.warn('No file found in global drop event');
+                console.warn('No file found in global drop event', e);
                 return;
             }
             if (!file.type.startsWith('image/')) {
