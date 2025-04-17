@@ -26,8 +26,8 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-  <script type="module" crossorigin src="/spell/assets/index-50OLfkQG.js"></script>
-  <link rel="stylesheet" crossorigin href="/spell/assets/index-C5HrXusS.css">
+  <script type="module" crossorigin src="/spell/assets/index-Rh5x2zWO.js"></script>
+  <link rel="stylesheet" crossorigin href="/spell/assets/index-B2L_73ub.css">
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen relative scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800">
@@ -144,14 +144,14 @@
                                     <span class="font-medium text-gray-700 dark:text-gray-200"
                                         data-i18n="positivePrompt"></span>
                                     <button id="copy-prompt"
-                                        class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
+                                        class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-200 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
                                         <i class="ri-file-copy-line mr-1"></i>
                                         <span data-i18n="copy" id="default-message"></span>
                                         <span data-i18n="copied" id="success-message" class="hidden"></span>
                                     </button>
                                 </div>
                                 <p id="prompt-content"
-                                    class="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 p-3 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800"
+                                    class="text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-900 p-3 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800"
                                     style="max-height: 220px; overflow-y: auto;">
                                 </p>
                             </div>
@@ -160,14 +160,14 @@
                                     <span class="font-medium text-gray-700 dark:text-gray-200"
                                         data-i18n="negativePrompt"></span>
                                     <button id="copy-negative-prompt"
-                                        class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
+                                        class="copy-btn flex items-center px-3 py-1 text-sm bg-gray-200 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
                                         <i class="ri-file-copy-line mr-1"></i>
                                         <span data-i18n="copy" id="default-message"></span>
                                         <span data-i18n="copied" id="success-message" class="hidden"></span>
                                     </button>
                                 </div>
                                 <p id="negative-prompt-content"
-                                    class="text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900 p-3 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800"
+                                    class="text-gray-600 dark:text-gray-400 bg-gray-200 dark:bg-gray-900 p-3 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800"
                                     style="max-height: 160px; overflow-y: auto;">
                                 </p>
                             </div>
@@ -177,11 +177,15 @@
 
                 <!-- JSON预览区域 -->
                 <div class="mt-8">
-                    <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
-                        <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800 dark:text-gray-50">完整元数据
-                        </h3>
-                    </div>
-                    <div id="jsonViewer" class="bg-gray-100 dark:bg-gray-900 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800">
+                    <button id="jsonToggle" class="bg-gray-200 dark:bg-gray-900 flex rounded-lg items-center justify-between w-full text-left mb-4 group">
+                        <div class="container mx-auto flex items-center justify-between px-4">
+                            <div class="flex items-center gap-2">
+                                <h3 data-i18n="fullMetadata" class="text-xl font-semibold text-gray-800 dark:text-gray-50">完整元数据</h3>
+                            </div>
+                            <i class="ri-arrow-down-s-line text-2xl text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-all duration-200"></i>
+                        </div>
+                    </button>
+                    <div id="jsonViewer" class="bg-gray-200 dark:bg-gray-900 rounded-lg scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800">
                         <code class="text-gray-700 dark:text-gray-200 language-json whitespace-pre-wrap break-words"
                             id="jsonContent"></code>
                     </div>
@@ -189,6 +193,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Scroll to top button -->
+    <button id="scrollToTop" class="fixed bottom-8 right-8 z-50 hidden w-12 h-12 rounded-full bg-blue-500 dark:bg-blue-600 text-white shadow-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-all duration-300 flex items-center justify-center">
+        <i class="ri-arrow-up-line text-2xl"></i>
+    </button>
+
+    <!-- Footer with GitHub link -->
+    <footer class="container mx-auto px-4 py-6 max-w-7xl text-center text-gray-500 dark:text-gray-400 text-sm">
+        <a href="https://github.com/looyun/spell/issues" target="_blank"
+           class="inline-flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+            <i class="ri-github-fill"></i>
+            <span data-i18n="reportIssues">报告问题/Report Issues</span>
+        </a>
+    </footer>
 </body>
 
 </html>
