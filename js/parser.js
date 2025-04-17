@@ -87,7 +87,7 @@ class ImageParser {
     detectGenerator(exif) {
 
         // ComfyUI 特征: 包含 prompt 和 workflow
-        if (exif.prompt && exif.workflow) {
+        if (exif.prompt || exif.workflow || exif.generation_data) {
             return 'ComfyUI';
         }
 
@@ -108,7 +108,7 @@ class ImageParser {
         try {
             const params = JSON.parse(exif.Comment?.value || '{}');
             console.log('NovelAI 图片信息:', params);
-            
+
             return {
                 model: exif.Source?.value || 'Unknown',
                 cfg: params.scale || '',
@@ -131,35 +131,60 @@ class ImageParser {
     parseComfyUI(exif) {
 
         try {
-            const prompts = this.parseComfyUIPrompts(exif);
-            const workflow = this.parseComfyUIWorkflow(exif);
-            return prompts;
+            var data = null;
+            // parse generation_data
+            if (exif.generation_data) {
+                console.log('解析到的ComfyUI generation_data:', exif.generation_data);
+                data = this.parseComfyUIGenerationData(exif);
+            }
+            // parse workflow
+            if (!data && exif.workflow) {
+                console.log('解析到的ComfyUI workflow:', exif.workflow);
+                data = this.parseComfyUIWorkflow(exif);
+            }
+            // parse prompt
+            if (!data && exif.prompt) {
+                console.log('解析到的ComfyUI prompt:', exif.prompt);
+                data = this.parseComfyUIPrompts(exif);
+            }
+            return data;
         } catch (error) {
             console.error('解析ComfyUI参数失败:', error);
             return this.parseGeneric(exif);
         }
     }
 
-    // 递归获取prompt
-    getPromptNode(node, datas) {
-        console.log(node.class_type);
-        if (node.class_type === 'CLIPTextEncode' || node.class_type === 'smZ CLIPTextEncode') {
-            // 判断text是不是字符串
-            if (typeof node.inputs?.text === 'string') {
-                return node
+    // parse generation_data
+    // "generation_data": {
+    // "value": "{\"models\":[{\"label\":\"v1\",\"type\":\"LORA\",\"modelId\":\"768486055772084310\",\"modelFileId\":\"768486077245872243\",\"weight\":0.8,\"modelFileName\":\"08f3d7ea-3f73-4b1a-a385-8fb23b3628b6.by_tusi\",\"baseModel\":\"FLUX.1\",\"hash\":\"E0BF2C7F56FE663E054DDD64EB138D65C7F38ADE3BC1A2A980E5002EECB4341D\"},{\"label\":\"109Epoch\",\"type\":\"LORA\",\"modelId\":\"766575899131862285\",\"modelFileId\":\"766575899130813710\",\"weight\":0.3,\"modelFileName\":\"YJ-000109\",\"baseModel\":\"FLUX.1\",\"hash\":\"C15FCA0EAC9B3003D1D38403427108F425DB987313A2950EEC1DF6462DAEE112\"}],\"prompt\":\"depth of field, cowboy shot, (dynamic angle:0.8), (Inception_(film)), solo, girl standing, (playing instrument), (cello), looking down, original, (from side:0.7), (medium chest), white hair, long hair, blunt bangs, hairclip, closed eyes, white pleated dress, long dress, short sleeves, sailor collar, nature, outdoors, lush environment, background filled with dense green foliage, hedge, white flower, lily_(flower) surround, leaves, glowing white butterfly, dapped sunlight, handsome, \",\"width\":1344,\"height\":2048,\"imageCount\":2,\"samplerName\":\"DPM++ 2M SDE Karras\",\"steps\":20,\"cfgScale\":5.5,\"seed\":\"-1\",\"clipSkip\":2,\"baseModel\":{\"label\":\"V4.0\",\"type\":\"BASE_MODEL\",\"modelId\":\"788819169685673178\",\"modelFileId\":\"788819169684624603\",\"modelFileName\":\"FLUX-Anime_v4.0\",\"baseModel\":\"FLUX.1\",\"hash\":\"D85DC0CF4A22CB446A20E0DA3D6748F1DA4282A10811EC9C854AAE911C253B98\"},\"sdVae\":\"Automatic\",\"etaNoiseSeedDelta\":31337,\"sdxl\":{},\"ksamplerName\":\"dpmpp_2m_sde_gpu\",\"schedule\":\"karras\",\"guidance\":5.5}\u0000",
+    parseComfyUIGenerationData(exif) {
+        try {
+            // fix \u0000 问题
+            if (exif.generation_data?.value) {
+                exif.generation_data.value = exif.generation_data.value.replace(/\u0000/g, '');
             }
-            // 判断text是不是数组
-            if (Array.isArray(node.inputs?.text)) {
-                return this.getPromptNode(datas[node.inputs?.text[0]], datas)
-            }
-        }
-        if (node.inputs?.conditioning) {
-            const key = node.inputs.conditioning[0]
-            return this.getPromptNode(datas[key], datas)
-        }
-        return node
-    }
+            const data = JSON.parse(exif.generation_data?.value || '{}');
+            console.log('解析到的COmfy UI generation_data:', data);
+            const positivePrompt = data.prompt || '';
+            const negativePrompt = data.uc || '';
 
+            return {
+                model: data.baseModel?.modelFileName || 'Unknown',
+                cfg: data.cfgScale || '',
+                steps: data.steps || '',
+                seed: data.seed || '',
+                sampler: data.samplerName || '',
+                scheduler: data.schedule || '',
+                positivePrompt: positivePrompt,
+                negativePrompt: negativePrompt,
+                artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
+                charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
+            };
+        } catch (error) {
+            console.error('解析ComfyUI参数失败:', error);
+            return '{}';
+        }
+    }
 
     parseComfyUIPrompts(exif) {
 
@@ -170,7 +195,7 @@ class ImageParser {
                 exif.prompt.value = exif.prompt.value.replace(/NaN/g, '0');
             }
             const data = JSON.parse(exif.prompt?.value || '{}');
-            console.log('解析到的ComfyUI参数:', data);
+            console.log('解析到的ComfyUI prompt:', data);
 
 
             // 处理不同节点类型
@@ -250,12 +275,31 @@ class ImageParser {
         }
     }
 
+    // 递归获取prompt
+    getPromptNode(node, datas) {
+        console.log(node.class_type);
+        if (node.class_type === 'CLIPTextEncode' || node.class_type === 'smZ CLIPTextEncode') {
+            // 判断text是不是字符串
+            if (typeof node.inputs?.text === 'string') {
+                return node
+            }
+            // 判断text是不是数组
+            if (Array.isArray(node.inputs?.text)) {
+                return this.getPromptNode(datas[node.inputs?.text[0]], datas)
+            }
+        }
+        if (node.inputs?.conditioning) {
+            const key = node.inputs.conditioning[0]
+            return this.getPromptNode(datas[key], datas)
+        }
+        return node
+    }
 
     parseComfyUIWorkflow(exif) {
 
         try {
             const data = JSON.parse(exif?.workflow.vlaue || '{}');
-            return data;
+            return null;
         } catch {
             return '{}';
         }
