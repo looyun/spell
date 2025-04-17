@@ -17,15 +17,11 @@ class ImageParser {
             return
         }
 
-        // 将完整的原始标签数据添加到返回结果中
         const rawMetadata = {};
         // 转换ExifReader标签为普通对象
         for (const [key, value] of Object.entries(exif)) {
             if (value && typeof value === 'object') {
-                rawMetadata[key] = {
-                    description: value.description,
-                    value: value.value
-                };
+                rawMetadata[key] = value;
             }
         }
 
@@ -100,6 +96,11 @@ class ImageParser {
             return 'NovelAI';
         }
 
+        // Stable Diffusion 特征: 包含 parameters
+        if (exif.parameters?.value) {
+            return 'Stable Diffusion';
+        }
+
         return 'Unknown';
     }
 
@@ -131,11 +132,10 @@ class ImageParser {
 
         try {
             const prompts = this.parseComfyUIPrompts(exif);
-            const workflowData = JSON.parse(exif.workflow?.description || '{}');
-            const workflow = this.parseComfyUIWorkflow(workflowData || '{}');
+            const workflow = this.parseComfyUIWorkflow(exif);
             return prompts;
         } catch (error) {
-            console.error('解析ComfyUI失败:', error);
+            console.error('解析ComfyUI参数失败:', error);
             return this.parseGeneric(exif);
         }
     }
@@ -157,11 +157,11 @@ class ImageParser {
         try {
 
             // 修复NaN问题
-            if (exif.prompt?.description) {
-                exif.prompt.description = exif.prompt.description.replace(/NaN/g, '0');
+            if (exif.prompt?.value) {
+                exif.prompt.value = exif.prompt.value.replace(/NaN/g, '0');
             }
-            const data = JSON.parse(exif.prompt?.description || '{}');
-            console.log('解析到的ComfyUI提示:', data);
+            const data = JSON.parse(exif.prompt?.value || '{}');
+            console.log('解析到的ComfyUI参数:', data);
 
 
             // 处理不同节点类型
@@ -232,16 +232,16 @@ class ImageParser {
                 negativePrompt: negativePromptInput?.text || negativePromptInput?.negative || '',
             };
         } catch (error) {
-            console.error('解析ComfyUI提示失败:', error);
+            console.error('解析ComfyUI参数失败:', error);
             return '{}';
         }
     }
 
 
-    parseComfyUIWorkflow(workflowDescription) {
+    parseComfyUIWorkflow(exif) {
 
         try {
-            const data = JSON.parse(workflowDescription.description || '{}');
+            const data = JSON.parse(exif?.workflow.vlaue || '{}');
             return data;
         } catch {
             return '{}';
@@ -251,7 +251,10 @@ class ImageParser {
     // 修改 parseStableDiffusion 方法以包含完整参数字符串
     parseStableDiffusion(exif) {
         // Stable Diffusion 通常在 parameters 中存储信息
-        const params = exif.parameters?.description || '';
+        const params = exif.parameters?.value || '';
+        if (!params) {
+            return {};
+        }
 
         // 解析常见的 SD 格式
         const positivePrompt = params.split('Negative prompt:')[0].trim();
@@ -261,10 +264,49 @@ class ImageParser {
             model: 'Stable Diffusion',
             positivePrompt,
             negativePrompt,
-            parameters: this.extractSDParameters(params),
+            ...this.extractSDParameters(params),
             rawParameters: params // 保存完整的参数字符串
         };
     }
+
+    extractSDParameters(params) {
+        const result = {};
+
+        // 提取常见参数
+        const patterns = {
+            'steps': /Steps: (\d+)/,
+            'sampler': /Sampler: ([^,]+)/,
+            'cfg': /CFG scale: (\d+\.?\d*)/,
+            'seed': /Seed: (\d+)/,
+            'size': /Size: (\d+x\d+)/,
+            'scheduler': /Schedule type: (\w+)/,
+            'model': /Model: ([^,]+)/,
+        };
+
+        for (const [key, pattern] of Object.entries(patterns)) {
+            const match = params.match(pattern);
+            if (match) {
+                result[key] = match[1];
+            }
+        }
+
+        return result;
+    }
+
+    parseParameters(paramString) {
+        const params = {};
+        const pairs = paramString.split(',').map(p => p.trim());
+
+        pairs.forEach(pair => {
+            const [key, value] = pair.split(':').map(p => p.trim());
+            if (key && value) {
+                params[key] = value;
+            }
+        });
+
+        return params;
+    }
+
 
     parseGeneric(exif) {
         if (exif) {
@@ -274,13 +316,6 @@ class ImageParser {
                 const lines = str.trim().split('\n').
                     map(line => line.replace(/[\u0000-\u001F]/g, '')). // 去除控制字符
                     filter(line => line.trim() !== ''); // 去除空行
-                return this.parseLines(lines);
-            }
-            if (exif.parameters?.description) { 
-                // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
-                const params = exif.parameters?.description || '';
-                console.log('解析到的NovelAI参数:', params);
-                const lines = params.split('\n');
                 return this.parseLines(lines);
             }
         }
@@ -315,44 +350,6 @@ class ImageParser {
             console.error('解析行失败:', error);
             return '{}';
         }
-    }
-
-    extractSDParameters(params) {
-        const result = {};
-
-        // 提取常见参数
-        const patterns = {
-            'Steps': /Steps: (\d+)/,
-            'Sampler': /Sampler: ([^,]+)/,
-            'CFG scale': /CFG scale: (\d+\.?\d*)/,
-            'Seed': /Seed: (\d+)/,
-            'Size': /Size: (\d+x\d+)/,
-            'Model hash': /Model hash: (\w+)/,
-            'Model': /Model: ([^,]+)/,
-        };
-
-        for (const [key, pattern] of Object.entries(patterns)) {
-            const match = params.match(pattern);
-            if (match) {
-                result[key] = match[1];
-            }
-        }
-
-        return result;
-    }
-
-    parseParameters(paramString) {
-        const params = {};
-        const pairs = paramString.split(',').map(p => p.trim());
-
-        pairs.forEach(pair => {
-            const [key, value] = pair.split(':').map(p => p.trim());
-            if (key && value) {
-                params[key] = value;
-            }
-        });
-
-        return params;
     }
 }
 
