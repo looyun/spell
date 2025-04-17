@@ -88,15 +88,15 @@ class ImageParser {
         });
     }
 
-    detectGenerator(tags) {
+    detectGenerator(exif) {
 
         // ComfyUI 特征: 包含 prompt 和 workflow
-        if (tags.prompt && tags.workflow) {
+        if (exif.prompt && exif.workflow) {
             return 'ComfyUI';
         }
 
-        // NovelAI 特征: 包含 parameters
-        if (tags.parameters || tags.Parameters) {
+        // NovelAI 特征
+        if (exif.Software?.value == "NovelAI") {
             return 'NovelAI';
         }
 
@@ -105,12 +105,23 @@ class ImageParser {
 
     parseNovelAI(exif) {
         try {
-            // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
-            const params = exif.parameters?.description || '';
-            console.log('解析到的NovelAI参数:', params);
-            const lines = params.split('\n');
-            return this.parseLines(lines);
+            const params = JSON.parse(exif.Comment?.value || '{}');
+            console.log('NovelAI 图片信息:', params);
+            
+            return {
+                model: exif.Source?.value || 'Unknown',
+                cfg: params.scale || '',
+                steps: params.steps || '',
+                seed: params.seed || '',
+                sampler: params.sampler || '',
+                scheduler: params.noise_schedule || '',
+                positivePrompt: params.prompt || '',
+                artistMatches: globalMatchers.artistMatcher.findMatches(params.prompt),
+                charaterMatches: globalMatchers.characterMatcher.findMatches(params.prompt),
+                negativePrompt: params.uc || '',
+            };
         } catch (error) {
+            console.error('解析NovelAI失败:', error);
             return '{}';
         }
     }
@@ -265,6 +276,13 @@ class ImageParser {
                     filter(line => line.trim() !== ''); // 去除空行
                 return this.parseLines(lines);
             }
+            if (exif.parameters?.description) { 
+                // 先根据 '\n' split, 再根据 ':' split，如果有':'则取第一个为key，第二个为value
+                const params = exif.parameters?.description || '';
+                console.log('解析到的NovelAI参数:', params);
+                const lines = params.split('\n');
+                return this.parseLines(lines);
+            }
         }
     }
 
@@ -294,6 +312,7 @@ class ImageParser {
                 positivePrompt: lines || '',
             };
         } catch (error) {
+            console.error('解析行失败:', error);
             return '{}';
         }
     }
