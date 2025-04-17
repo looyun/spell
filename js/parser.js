@@ -134,17 +134,14 @@ class ImageParser {
             var data = null;
             // parse generation_data
             if (exif.generation_data) {
-                console.log('解析到的ComfyUI generation_data:', exif.generation_data);
                 data = this.parseComfyUIGenerationData(exif);
             }
             // parse workflow
             if (!data && exif.workflow) {
-                console.log('解析到的ComfyUI workflow:', exif.workflow);
                 data = this.parseComfyUIWorkflow(exif);
             }
             // parse prompt
             if (!data && exif.prompt) {
-                console.log('解析到的ComfyUI prompt:', exif.prompt);
                 data = this.parseComfyUIPrompts(exif);
             }
             return data;
@@ -164,7 +161,7 @@ class ImageParser {
                 exif.generation_data.value = exif.generation_data.value.replace(/\u0000/g, '');
             }
             const data = JSON.parse(exif.generation_data?.value || '{}');
-            console.log('解析到的COmfy UI generation_data:', data);
+            console.log('解析到的Comfy UI generation_data:', data);
             const positivePrompt = data.prompt || '';
             const negativePrompt = data.uc || '';
 
@@ -173,7 +170,7 @@ class ImageParser {
                 cfg: data.cfgScale || '',
                 steps: data.steps || '',
                 seed: data.seed || '',
-                sampler: data.samplerName || '',
+                sampler: data.ksamplerName || data.samplerName || '',
                 scheduler: data.schedule || '',
                 positivePrompt: positivePrompt,
                 negativePrompt: negativePrompt,
