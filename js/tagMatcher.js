@@ -62,6 +62,10 @@ class TagMatcher {
             console.warn('Tags not loaded yet, returning empty matches');
             return [];
         }
+        if (!text || typeof text !== 'string') {
+            console.warn('Invalid input text, returning empty matches, text:', text);
+            return [];
+        }
         return this.trie.findAllMatches(text);
     }
 }

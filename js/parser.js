@@ -141,14 +141,23 @@ class ImageParser {
     }
 
     // 递归获取prompt
-    getPrompt(node, datas) {
+    getPromptNode(node, datas) {
+        console.log(node.class_type);
         if (node.class_type === 'CLIPTextEncode' || node.class_type === 'smZ CLIPTextEncode') {
-            return node
+            // 判断text是不是字符串
+            if (typeof node.inputs?.text === 'string') {
+                return node
+            }
+            // 判断text是不是数组
+            if (Array.isArray(node.inputs?.text)) {
+                return this.getPromptNode(datas[node.inputs?.text[0]], datas)
+            }
         }
         if (node.inputs?.conditioning) {
             const key = node.inputs.conditioning[0]
-            return this.getPrompt(datas[key], datas)
+            return this.getPromptNode(datas[key], datas)
         }
+        return node
     }
 
 
@@ -196,7 +205,7 @@ class ImageParser {
                             schedulerInput = data[data[key].inputs.sigmas[0]].inputs;
                         }
                         if (positivePromptInput == null) {
-                            positivePromptInput = this.getPrompt(data[data[key].inputs.guider[0]], data).inputs;
+                            positivePromptInput = this.getPromptNode(data[data[key].inputs.guider[0]], data).inputs;
                         }
 
                     } else if (data[key].class_type === 'CheckpointLoaderSimple' || data[key].class_type === 'easy a1111Loader') {
@@ -212,13 +221,17 @@ class ImageParser {
             }
             // 从checkpoint或者unet节点中根据inputs.positive数组或者inputs.negative数组获取正向和负向提示
             if (positivePromptInput == null && samplerInput && samplerInput.positive) {
-                const promptNode = this.getPrompt(data[samplerInput.positive[0]], data)
+                const promptNode = this.getPromptNode(data[samplerInput.positive[0]], data)
                 if (promptNode) {
                     positivePromptInput = promptNode.inputs;
                 }
-                negativePromptInput = this.getPrompt(data[samplerInput.negative[0]], data).inputs
+                const negativePromptNode = this.getPromptNode(data[samplerInput.negative[0]], data)
+                if (negativePromptNode) {
+                    negativePromptInput = negativePromptNode.inputs;
+                }
             }
-            const positivePrompt = positivePromptInput?.text || positivePromptInput?.positive || '';
+            const positivePrompt = positivePromptInput?.text || positivePromptInput?.positive || positivePromptInput?.tags || '';
+            const negativePrompt = negativePromptInput?.text || negativePromptInput?.positive || negativePromptInput?.tags || '';
             return {
                 model: checkPointInput?.ckpt_name || unetInput?.unet_name || 'Unknown',
                 cfg: samplerInput?.cfg || '',
@@ -227,9 +240,9 @@ class ImageParser {
                 sampler: samplerInput?.sampler_name || '',
                 scheduler: schedulerInput?.scheduler || '',
                 positivePrompt: positivePrompt,
+                negativePrompt: negativePrompt,
                 artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
                 charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
-                negativePrompt: negativePromptInput?.text || negativePromptInput?.negative || '',
             };
         } catch (error) {
             console.error('解析ComfyUI参数失败:', error);
