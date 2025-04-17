@@ -299,4 +299,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             successMessage.classList.add('hidden');
         }, 2000);
     }
+
+    // JSON折叠功能
+    const jsonToggle = document.getElementById('jsonToggle');
+    const jsonViewer = document.getElementById('jsonViewer');
+
+    const resultDiv = document.getElementById('result');
+
+    // 开发模式下保持展开
+    const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!isDevMode) {
+        jsonToggle.classList.add('collapsed');
+        jsonViewer.classList.add('collapsed');
+    }
+
+    jsonToggle.addEventListener('click', () => {
+        if (!jsonToggle.classList.contains('collapsed')) {
+            resultDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            jsonToggle.classList.toggle('collapsed');
+            jsonViewer.classList.toggle('collapsed');
+            scrollToTopBtn.classList.remove('visible');
+            scrollToTopBtn.classList.add('hidden');
+        } else {
+            jsonToggle.classList.toggle('collapsed');
+            jsonViewer.classList.toggle('collapsed');
+            // 滚动到JSON预览区域
+            jsonToggle.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            scrollToTopBtn.classList.add('visible');
+            scrollToTopBtn.classList.remove('hidden');
+        }
+    });
+
+    // Scroll to top button functionality
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+
+    scrollToTopBtn.addEventListener('click', () => {
+        resultDiv.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    });
+
 });

@@ -81,3 +81,50 @@ html {
 .dark .highlight-artist {
     background-color: rgba(144, 238, 144, 0.2);
 }
+
+/* JSON折叠样式 */
+#jsonToggle {
+    padding: 8px 0;
+}
+
+#jsonToggle > div {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    width: 100%;
+    max-width: 80rem; /* Match container max-width */
+}
+
+#jsonToggle i {
+    transition: transform 0.2s ease;
+}
+
+#jsonToggle.collapsed i {
+    transform: rotate(-90deg);
+}
+
+#jsonViewer {
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+}
+
+#jsonViewer.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Scroll to top button */
+#scrollToTop {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#scrollToTop.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#scrollToTop:hover {
+    transform: translateY(-2px) !important;
+}
