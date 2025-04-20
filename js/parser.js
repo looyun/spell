@@ -45,6 +45,9 @@ class ImageParser {
                 case 'Stable Diffusion':
                     metadata = this.parseStableDiffusion(exif);
                     break;
+                case 'Midjourney':
+                    metadata = this.parseMidjourney(exif);
+                    break;
                 default:
                     metadata = this.parseGeneric(exif);
             }
@@ -85,6 +88,12 @@ class ImageParser {
     }
 
     detectGenerator(exif) {
+        // Midjourney 特征
+        if (exif.Software?.value?.includes('Midjourney') ||
+            exif.Description?.value?.includes('--') ||
+            exif.UserComment?.value?.includes('--')) {
+            return 'Midjourney';
+        }
 
         // ComfyUI 特征: 包含 prompt 和 workflow
         if (exif.prompt || exif.workflow || exif.generation_data) {
@@ -361,6 +370,37 @@ class ImageParser {
         return params;
     }
 
+
+    parseMidjourney(exif) {
+        // 尝试从不同字段获取prompt
+        let prompt = '';
+        
+        // 1. 检查Description字段
+        if (exif.Description?.value) {
+            prompt = exif.Description.value;
+        }
+        // 2. 检查UserComment字段
+        else if (exif.UserComment?.value) {
+            if (typeof exif.UserComment.value === 'string') {
+                prompt = exif.UserComment.value;
+            } else {
+                // 处理字节数组形式的UserComment
+                prompt = String.fromCharCode(null, ...exif.UserComment.value);
+            }
+        }
+        // 3. 检查其他可能字段
+        else if (exif.Comment?.value) {
+            prompt = exif.Comment.value;
+        }
+
+        // 清理prompt中的控制字符
+        prompt = prompt.replace(/[\u0000-\u001F]/g, '').trim();
+
+        return {
+            positivePrompt: prompt,
+            generator: 'Midjourney'
+        };
+    }
 
     parseGeneric(exif) {
         if (exif) {
