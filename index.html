@@ -26,8 +26,8 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
-  <script type="module" crossorigin src="/spell/assets/index-Rh5x2zWO.js"></script>
-  <link rel="stylesheet" crossorigin href="/spell/assets/index-B2L_73ub.css">
+  <script type="module" crossorigin src="/spell/assets/index-CCCzKi-2.js"></script>
+  <link rel="stylesheet" crossorigin href="/spell/assets/index-B9kVQWFR.css">
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen relative scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800">
@@ -69,7 +69,25 @@
             <p data-i18n="dropzoneSubtext" class="text-gray-400 dark:text-gray-400 text-sm">浏览器本地实现，不会上传到云端</p>
             <input type="file" id="fileInput" class="hidden" accept="image/*">
         </div>
-
+    
+        <!-- 照片墙区域 -->
+        <div id="photoWall" class="relative flex flex-col p-4 mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group">
+            <div class="flex flex-col h-[400px] overflow-x-auto scrollbar-hide">
+                <div id="photoRow1" class="flex flex-nowrap items-start h-[200px] gap-0 w-full"></div>
+                <div id="photoRow2" class="flex flex-nowrap items-start h-[200px] gap-0 w-full"></div>
+            </div>
+            <button id="scrollLeftBtn" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center shadow-md border border-gray-200 dark:border-gray-600 transition-all opacity-0 group-hover:opacity-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="scrollRightBtn" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 dark:bg-gray-700/80 hover:bg-white dark:hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center shadow-md border border-gray-200 dark:border-gray-600 transition-all opacity-0 group-hover:opacity-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+    
         <!-- 修改结果展示区域 -->
         <div id="result" class="hidden min-h-[80vh]">
             <div class="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 dark:border-gray-700">
