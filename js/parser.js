@@ -142,16 +142,16 @@ class ImageParser {
         try {
             var data = null;
             // parse generation_data
-            if (exif.generation_data) {
+            if (!data && exif.generation_data) {
                 data = this.parseComfyUIGenerationData(exif);
-            }
-            // parse workflow
-            if (!data && exif.workflow) {
-                data = this.parseComfyUIWorkflow(exif);
             }
             // parse prompt
             if (!data && exif.prompt) {
                 data = this.parseComfyUIPrompts(exif);
+            }
+            // parse workflow
+            if (!data && exif.workflow) {
+                data = this.parseComfyUIWorkflow(exif);
             }
             return data;
         } catch (error) {
@@ -304,8 +304,8 @@ class ImageParser {
     parseComfyUIWorkflow(exif) {
 
         try {
-            const data = JSON.parse(exif?.workflow.vlaue || '{}');
-            return null;
+            const data = parseWorkflow(exif?.workflow.value || '{}');
+            return data;
         } catch {
             return '{}';
         }
@@ -448,3 +448,205 @@ class ImageParser {
 }
 
 export default ImageParser;
+
+
+
+
+
+/**
+ * Finds a node by its ID in the workflow.
+ * @param {Array} nodes - The array of nodes from the workflow.
+ * @param {number} nodeId - The ID of the node to find.
+ * @returns {object|null} The node object or null if not found.
+ */
+function findNodeById(nodes, nodeId) {
+    return nodes.find(node => node.id === nodeId) || null;
+}
+
+/**
+ * Finds the node and output slot index that produces a given link ID.
+ * @param {Array} nodes - The array of nodes from the workflow.
+ * @param {number} targetLinkId - The ID of the link we are looking for.
+ * @returns {{node: object, outputIndex: number}|null} The source node and output slot index or null.
+ */
+function findSourceNodeForLink(nodes, targetLinkId) {
+    for (const node of nodes) {
+        if (node.outputs) {
+            for (let i = 0; i < node.outputs.length; i++) {
+                const output = node.outputs[i];
+                if (output.links && output.links.includes(targetLinkId)) {
+                    return { node: node, outputIndex: i };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Traces back conditioning links to find the originating CLIPTextEncode node.
+ * @param {number} initialLinkId - The link ID connected to the sampler's input.
+ * @param {Array} nodes - The array of nodes from the workflow.
+ * @returns {object|null} The CLIPTextEncode node or null.
+ */
+function findTextEncodeNodeForConditioning(initialLinkId, nodes) {
+    let currentLinkId = initialLinkId;
+    let safetyCounter = 0; // Prevent infinite loops in complex graphs
+
+    while (currentLinkId !== null && safetyCounter < 20) {
+        const sourceInfo = findSourceNodeForLink(nodes, currentLinkId);
+        if (!sourceInfo) return null; // Link source not found
+
+        const sourceNode = sourceInfo.node;
+
+        // If we found a CLIPTextEncode, return it
+        if (sourceNode.type === "CLIPTextEncode") {
+            return sourceNode;
+        }
+
+        // If it's an intermediate node (like ControlNetApply), trace its input
+        // Look for a 'positive' or 'negative' input that corresponds to the output link
+        // This logic might need adjustment based on the specific intermediate node types
+        if (sourceNode.inputs) {
+             // Find the input slot that corresponds to the link we came from.
+             // This assumes the intermediate node passes conditioning through.
+             const relevantInput = sourceNode.inputs.find(input =>
+                (input.type === "CONDITIONING" || input.name === "positive" || input.name === "negative") &&
+                sourceNode.outputs[sourceInfo.outputIndex]?.name === input.name // Simple check if names match
+             );
+
+            if (relevantInput && relevantInput.link) {
+                 currentLinkId = relevantInput.link; // Continue tracing back from the input link
+            } else {
+                 // Try finding *any* conditioning input if the name matching failed
+                 const conditioningInput = sourceNode.inputs.find(input => input.type === "CONDITIONING" && input.link);
+                 if (conditioningInput) {
+                    currentLinkId = conditioningInput.link;
+                 } else {
+                    currentLinkId = null; // Cannot trace back further
+                 }
+            }
+        } else {
+            currentLinkId = null; // Node has no inputs to trace back
+        }
+        safetyCounter++;
+    }
+    return null; // Didn't find a CLIPTextEncode node within limits
+}
+
+
+/**
+ * Parses a ComfyUI workflow JSON to extract key generation parameters.
+ * @param {object|string} workflowData - The workflow JSON object or string.
+ * @returns {object|null} An object containing extracted parameters or null if parsing fails.
+ */
+function parseWorkflow(workflowData) {
+    const workflow = typeof workflowData === 'string' ? JSON.parse(workflowData) : workflowData;
+
+    if (!workflow ) {
+        console.error("Invalid workflow data provided.");
+        return null;
+    }
+    if (!workflow.nodes) {
+        console.error("Invalid workflow nodes provided.");
+        return null;
+    }
+
+    const nodes = workflow.nodes;
+    const links = workflow.links; // Links aren't directly used in this version but useful for complex tracing
+
+    // --- Find the Sampler Node ---
+    // Prioritize KSampler (Efficient), then KSampler, then KSampler (Advanced)
+    // We take the first one found, assuming it's the primary one.
+    let samplerNode = nodes.find(node => node.type === "KSampler (Efficient)");
+    if (!samplerNode) {
+        samplerNode = nodes.find(node => node.type === "KSampler");
+    }
+    if (!samplerNode) {
+         samplerNode = nodes.find(node => node.type === "KSampler (Advanced)");
+    }
+    // Add more sampler types if needed
+
+    if (!samplerNode) {
+        console.warn("Could not find a suitable KSampler node in the workflow.");
+        // Optionally, search for other custom sampler nodes here
+        return null;
+    }
+
+    // --- Extract Sampler Parameters ---
+    let seed = null;
+    let steps = null;
+    let cfg = null;
+    let samplerName = null;
+    let scheduler = null;
+
+    // Parameter indices can vary based on the *exact* sampler node type.
+    // These indices are based on the "KSampler (Efficient)" node in your example.
+    // Adjust these if using standard KSampler or KSampler Advanced primarily.
+    if (samplerNode.type === "KSampler (Efficient)" && samplerNode.widgets_values) {
+        // Expected order for KSampler (Efficient): [seed, ?, steps, cfg, sampler_name, scheduler, ...]
+        // Note: Index 1 is often 'noise_seed' or similar, skipped here.
+        if (samplerNode.widgets_values.length > 5) {
+             seed = samplerNode.widgets_values[0];
+             steps = samplerNode.widgets_values[2];
+             cfg = samplerNode.widgets_values[3];
+             samplerName = samplerNode.widgets_values[4];
+             scheduler = samplerNode.widgets_values[5];
+        }
+    } else if (samplerNode.type === "KSampler" && samplerNode.widgets_values) {
+         // Expected order for KSampler: [seed, steps, cfg, sampler_name, scheduler, denoise]
+         if (samplerNode.widgets_values.length > 4) {
+             seed = samplerNode.widgets_values[0];
+             steps = samplerNode.widgets_values[1];
+             cfg = samplerNode.widgets_values[2];
+             samplerName = samplerNode.widgets_values[3];
+             scheduler = samplerNode.widgets_values[4];
+         }
+    }
+    // Add logic for other sampler types (like KSampler Advanced) if needed
+
+    // --- Extract Prompts ---
+    let positivePrompt = null;
+    let negativePrompt = null;
+
+    const positiveInput = samplerNode.inputs?.find(inp => inp.name === 'positive');
+    const negativeInput = samplerNode.inputs?.find(inp => inp.name === 'negative');
+
+    if (positiveInput && positiveInput.link) {
+        const positiveTextNode = findTextEncodeNodeForConditioning(positiveInput.link, nodes);
+        // Extract text from the widget_values of the CLIPTextEncode node
+        // Assumes the first widget value is the text prompt.
+        if (positiveTextNode && positiveTextNode.widgets_values && positiveTextNode.widgets_values.length > 0) {
+            positivePrompt = positiveTextNode.widgets_values[0];
+        } else if (positiveTextNode) {
+             console.warn("Found positive CLIPTextEncode node (ID:", positiveTextNode.id, ") but could not extract text from widgets_values.");
+        } else {
+             console.warn("Could not trace positive prompt link (", positiveInput.link, ") back to a CLIPTextEncode node.");
+        }
+    }
+
+    if (negativeInput && negativeInput.link) {
+        const negativeTextNode = findTextEncodeNodeForConditioning(negativeInput.link, nodes);
+        // Extract text from the widget_values of the CLIPTextEncode node
+        if (negativeTextNode && negativeTextNode.widgets_values && negativeTextNode.widgets_values.length > 0) {
+            negativePrompt = negativeTextNode.widgets_values[0];
+        } else if (negativeTextNode) {
+             console.warn("Found negative CLIPTextEncode node (ID:", negativeTextNode.id, ") but could not extract text from widgets_values.");
+        } else {
+            console.warn("Could not trace negative prompt link (", negativeInput.link, ") back to a CLIPTextEncode node.");
+        }
+    }
+
+
+    return {
+        positivePrompt: positivePrompt,
+        negativePrompt: negativePrompt,
+        artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
+        charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
+        cfg: cfg,
+        sampler: samplerName,
+        scheduler: scheduler,
+        steps: steps,
+        seed: seed,
+    };
+}

@@ -13,45 +13,6 @@ function updateI18n() {
     });
 }
 
-async function initPhotoWall() {
-    try {
-        const response = await fetch('assets/img/');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const html = parser.parseFromString(text, 'text/html');
-        const links = Array.from(html.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"]'));
-        
-        window.uploadedImages = window.uploadedImages || new Set();
-        let currentRow = 1;
-        
-        for (const link of links) {
-            const imgUrl = `assets/img/${link.getAttribute('href')}`;
-            if (window.uploadedImages.has(imgUrl)) continue;
-            
-            const img = new Image();
-            img.src = imgUrl;
-            img.onload = function() {
-                const wallImage = document.createElement('img');
-                wallImage.src = imgUrl;
-                wallImage.className = 'h-full rounded-none shadow-sm';
-                wallImage.alt = 'Initial image';
-                wallImage.style.objectFit = 'contain';
-                wallImage.style.height = '200px';
-                wallImage.style.width = 'auto';
-                wallImage.style.minWidth = '0';
-                wallImage.style.flexShrink = '0';
-                
-                const targetRow = currentRow === 1 ? 'photoRow1' : 'photoRow2';
-                document.getElementById(targetRow).appendChild(wallImage);
-                currentRow = currentRow === 1 ? 2 : 1;
-                window.uploadedImages.add(imgUrl);
-            };
-        }
-    } catch (error) {
-        console.error('初始化照片墙失败:', error);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     await initPhotoWall();
     try {
@@ -172,6 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 检查是否已存在相同图片
         window.uploadedImages = window.uploadedImages || new Set();
         if (window.uploadedImages.has(imgSrc)) return false;
+        window.uploadedImages.add(imgSrc);
 
         const wallImage = document.createElement('img');
         wallImage.src = imgSrc;
@@ -187,7 +149,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             const targetRow = currentRow === 1 ? 'photoRow1' : 'photoRow2';
             document.getElementById(targetRow).appendChild(wallImage);
             window.currentPhotoRow = currentRow === 1 ? 2 : 1;
-            window.uploadedImages.add(imgSrc);
         };
         
         return true;
@@ -275,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupPhotoWallNavigation();
         try {
             // 使用Vite的import.meta.glob动态导入图片
-            const imageModules = import.meta.glob('../assets/img/*.{png,jpg,jpeg}');
+            const imageModules = import.meta.glob('../assets/img_ultracompressed/*.{png,jpg,jpeg}');
             const imageFiles = Object.keys(imageModules)
                 .map(path => path.replace('../assets/', 'assets/'))
                 .sort((a, b) => a.localeCompare(b));
