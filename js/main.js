@@ -13,7 +13,47 @@ function updateI18n() {
     });
 }
 
+async function initPhotoWall() {
+    try {
+        const response = await fetch('assets/img/');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const html = parser.parseFromString(text, 'text/html');
+        const links = Array.from(html.querySelectorAll('a[href$=".jpg"], a[href$=".jpeg"], a[href$=".png"]'));
+        
+        window.uploadedImages = window.uploadedImages || new Set();
+        let currentRow = 1;
+        
+        for (const link of links) {
+            const imgUrl = `assets/img/${link.getAttribute('href')}`;
+            if (window.uploadedImages.has(imgUrl)) continue;
+            
+            const img = new Image();
+            img.src = imgUrl;
+            img.onload = function() {
+                const wallImage = document.createElement('img');
+                wallImage.src = imgUrl;
+                wallImage.className = 'h-full rounded-none shadow-sm';
+                wallImage.alt = 'Initial image';
+                wallImage.style.objectFit = 'contain';
+                wallImage.style.height = '200px';
+                wallImage.style.width = 'auto';
+                wallImage.style.minWidth = '0';
+                wallImage.style.flexShrink = '0';
+                
+                const targetRow = currentRow === 1 ? 'photoRow1' : 'photoRow2';
+                document.getElementById(targetRow).appendChild(wallImage);
+                currentRow = currentRow === 1 ? 2 : 1;
+                window.uploadedImages.add(imgUrl);
+            };
+        }
+    } catch (error) {
+        console.error('初始化照片墙失败:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    await initPhotoWall();
     try {
         await globalMatchers.initialize();
         // 继续其他初始化操作...
@@ -58,6 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 添加全局拖拽支持
     const globalDropZone = document.getElementById('globalDropZone');
+
+    // Allow manual dismissal by clicking
+    globalDropZone.addEventListener('click', () => {
+        globalDropZone.classList.remove('active');
+    });
 
     document.body.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -121,6 +166,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function addToPhotoWall(imgSrc, altText = 'Image') {
+        let currentRow = window.currentPhotoRow || 1;
+        
+        // 检查是否已存在相同图片
+        window.uploadedImages = window.uploadedImages || new Set();
+        if (window.uploadedImages.has(imgSrc)) return false;
+
+        const wallImage = document.createElement('img');
+        wallImage.src = imgSrc;
+        wallImage.className = 'h-full rounded-none shadow-sm';
+        wallImage.alt = altText;
+        wallImage.style.objectFit = 'contain';
+        wallImage.style.height = '200px';
+        wallImage.style.width = 'auto';
+        wallImage.style.minWidth = '0';
+        wallImage.style.flexShrink = '0';
+        
+        wallImage.onload = function() {
+            const targetRow = currentRow === 1 ? 'photoRow1' : 'photoRow2';
+            document.getElementById(targetRow).appendChild(wallImage);
+            window.currentPhotoRow = currentRow === 1 ? 2 : 1;
+            window.uploadedImages.add(imgSrc);
+        };
+        
+        return true;
+    }
+
     async function handleFile(file) {
         // 显示结果区域（仅在首次加载时）
         const resultDiv = document.getElementById('result');
@@ -134,6 +206,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.onload = function (e) {
                 const previewImage = document.getElementById('previewImage');
                 previewImage.src = e.target.result;
+                
+                // 添加到照片墙
+                addToPhotoWall(e.target.result, 'Uploaded image');
+
                 // 等待图片加载完成后再滚动
                 previewImage.onload = () => {
                     resultDiv.scrollIntoView({
@@ -142,9 +218,97 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                     resolve();
                 };
-            }
+            };
             reader.readAsDataURL(file);
         });
+    }
+
+    function setupPhotoWallNavigation() {
+        try {
+            const container = document.querySelector('.flex.flex-col.overflow-x-auto');
+            const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+            const scrollRightBtn = document.getElementById('scrollRightBtn');
+            
+            if (!container || !scrollLeftBtn || !scrollRightBtn) {
+                throw new Error('Required DOM elements not found');
+            }
+
+            const scrollStep = container.clientWidth * 0.8; // 滚动80%的容器宽度
+            
+            scrollLeftBtn.addEventListener('click', () => {
+                container.scrollBy({
+                    left: -scrollStep,
+                    behavior: 'smooth'
+                });
+            });
+            
+            scrollRightBtn.addEventListener('click', () => {
+                container.scrollBy({
+                    left: scrollStep,
+                    behavior: 'smooth'
+                });
+            });
+
+            // 确保两行图片都可见
+            const photoRows = container.querySelectorAll('div[id^="photoRow"]');
+            photoRows.forEach(row => {
+                row.style.display = 'flex';
+                row.style.visibility = 'visible';
+            });
+            
+            // 鼠标悬停显示按钮
+            container.closest('div[class*="relative"]').addEventListener('mouseenter', () => {
+                scrollLeftBtn.classList.remove('opacity-0');
+                scrollRightBtn.classList.remove('opacity-0');
+            });
+            
+            container.closest('div[class*="relative"]').addEventListener('mouseleave', () => {
+                scrollLeftBtn.classList.add('opacity-0');
+                scrollRightBtn.classList.add('opacity-0');
+            });
+        } catch (error) {
+            console.error('Photo wall navigation setup failed:', error);
+        }
+    }
+
+    async function initPhotoWall() {
+        setupPhotoWallNavigation();
+        try {
+            // 使用Vite的import.meta.glob动态导入图片
+            const imageModules = import.meta.glob('../assets/img/*.{png,jpg,jpeg}');
+            const imageFiles = Object.keys(imageModules)
+                .map(path => path.replace('../assets/', 'assets/'))
+                .sort((a, b) => a.localeCompare(b));
+            
+            // 初始化currentRow状态
+            window.currentPhotoRow = 1;
+            
+            // 按名字排序
+            for (const imgPath of imageFiles) {
+                try {
+                    // 使用动态导入确保Vite正确处理资源
+                    const module = await imageModules[`../${imgPath}`]();
+                    const imgUrl = module.default;
+                    
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.src = imgUrl;
+                        img.onload = function() {
+                            addToPhotoWall(imgUrl, 'Initial image');
+                            resolve();
+                        };
+                        img.onerror = function() {
+                            console.error('Failed to load image:', imgPath);
+                            resolve();
+                        };
+                    });
+                } catch (error) {
+                    console.error('Error loading image:', imgPath, error);
+                }
+            }
+        } catch (error) {
+            console.error('初始化照片墙失败:', error);
+        }
     }
 
     function displayMetadata(metadata) {

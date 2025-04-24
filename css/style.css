@@ -52,6 +52,19 @@ html {
     transform: scale(1.02);
 }
 
+/* 隐藏滚动条 */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+#photoWall {
+    cursor: move;
+}
+
 /* 添加平滑动画 */
 .transition-all {
     transition: all 0.3s ease;
