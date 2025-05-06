@@ -48,6 +48,9 @@ class ImageParser {
                 case 'Midjourney':
                     metadata = this.parseMidjourney(exif);
                     break;
+                case 'Illustrious XL':
+                    metadata = this.parseIllustriousXL(exif);
+                    break;
                 default:
                     metadata = this.parseGeneric(exif);
             }
@@ -106,11 +109,40 @@ class ImageParser {
         }
 
         // Stable Diffusion 特征: 包含 parameters
+        if (exif.generate_info?.value) {
+            return 'Illustrious XL';
+        }
+
+        // Stable Diffusion 特征: 包含 parameters
         if (exif.parameters?.value) {
             return 'Stable Diffusion';
         }
 
         return 'Unknown';
+    }
+
+    // "{\"checkpoint\": \"Illustrious-XL-v3.0-EPS-stable.safetensors\", \"prompt\": \"A split-color cat with striking green and yellow eyes, peeks out from below a wooden fence, its detailed eyes full of curiosity. The cat's fur is a beautiful blend of white and black, with whiskers twitching slightly as it observes the viewer. Sunlight filters through the trees and plants, casting gentle sun rays and light rays across the scene, creating a serene and picturesque atmosphere. The background is lush with greenery, bushes, and trees, all rendered in anime coloring style. The overall composition is a masterpiece of amazing quality, capturing the essence of a tranquil, sunlit day in a beautifully detailed and vibrant scenery, anime coloring\", \"negativePrompt\": \"worst quality, bad quality, low quality, 3d, light particles, lowres, anatomical nonsense, artistic error, bad anatomy,watermark\", \"width\": 1664, \"height\": 2432, \"seed\": 3445848, \"steps\": 30, \"cfgScale\": 7.5, \"samplerName\": \"euler_ancestral\", \"scheduler\": \"normal\", \"type\": \"AI Generated Image\"}"
+    parseIllustriousXL(exif) {
+        try {
+            const params = JSON.parse(exif.generate_info?.value || '{}');
+            console.log('Illustrious-XL 图片信息:', params);
+
+            return {
+                model: params.checkpoint || 'Unknown',
+                cfg: params.cfgScale || '',
+                steps: params.steps || '',
+                seed: params.seed || '',
+                sampler: params.samplerName || '',
+                scheduler: params.scheduler || '',
+                positivePrompt: params.prompt || '',
+                artistMatches: globalMatchers.artistMatcher.findMatches(params.prompt),
+                charaterMatches: globalMatchers.characterMatcher.findMatches(params.prompt),
+                negativePrompt: params.negativePrompt || '',
+            };
+        } catch (error) {
+            console.error('解析Illustrious-XL失败:', error);
+            return '{}';
+        }
     }
 
     parseNovelAI(exif) {
