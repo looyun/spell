@@ -14,14 +14,6 @@ function updateI18n() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await initPhotoWall();
-    try {
-        await globalMatchers.initialize();
-        // 继续其他初始化操作...
-    } catch (error) {
-        console.error('初始化失败:', error);
-        // 处理初始化失败的情况
-    }
 
     // 主题切换功能
     const themeToggle = document.getElementById('themeToggle');
@@ -30,9 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isDark = html.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
-
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
 
     // 初始化语言选择器
     const langSelect = document.getElementById('langSelect');
@@ -45,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初始化时更新一次
     updateI18n();
 
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
     // 点击上传
     dropZone.addEventListener('click', () => {
         fileInput.click();
@@ -110,6 +101,74 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert(t('upload_failed'));
         }
     });
+
+    // 复制按钮事件处理
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const content = btn.dataset.content;
+            await navigator.clipboard.writeText(content);
+            showCopySuccess(btn);
+        });
+    });
+
+
+
+    // JSON折叠功能
+    const jsonToggle = document.getElementById('jsonToggle');
+    const jsonViewer = document.getElementById('jsonViewer');
+
+    const resultDiv = document.getElementById('result');
+
+    // 开发模式下保持展开
+    const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (!isDevMode) {
+        jsonToggle.classList.add('collapsed');
+        jsonViewer.classList.add('collapsed');
+    }
+
+    jsonToggle.addEventListener('click', () => {
+        if (!jsonToggle.classList.contains('collapsed')) {
+            resultDiv.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            jsonToggle.classList.toggle('collapsed');
+            jsonViewer.classList.toggle('collapsed');
+            scrollToTopBtn.classList.remove('visible');
+            scrollToTopBtn.classList.add('hidden');
+        } else {
+            jsonToggle.classList.toggle('collapsed');
+            jsonViewer.classList.toggle('collapsed');
+            // 滚动到JSON预览区域
+            jsonToggle.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+            scrollToTopBtn.classList.add('visible');
+            scrollToTopBtn.classList.remove('hidden');
+        }
+    });
+
+    // Scroll to top button functionality
+    const scrollToTopBtn = document.getElementById('scrollToTop');
+
+    scrollToTopBtn.addEventListener('click', () => {
+        resultDiv.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    });
+
+    try {
+        await globalMatchers.initialize();
+        // 继续其他初始化操作...
+    } catch (error) {
+        console.error('初始化失败:', error);
+        // 处理初始化失败的情况
+    }
+
+    initPhotoWall();
 
     async function processImage(file) {
         try {
@@ -402,15 +461,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         contentEl.textContent = content;
     }
 
-    // 复制按钮事件处理
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const content = btn.dataset.content;
-            await navigator.clipboard.writeText(content);
-            showCopySuccess(btn);
-        });
-    });
-
     function showCopySuccess(btn) {
         const defaultMessage = btn.querySelector('#default-message');
         const successMessage = btn.querySelector('#success-message');
@@ -424,52 +474,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             successMessage.classList.add('hidden');
         }, 2000);
     }
-
-    // JSON折叠功能
-    const jsonToggle = document.getElementById('jsonToggle');
-    const jsonViewer = document.getElementById('jsonViewer');
-
-    const resultDiv = document.getElementById('result');
-
-    // 开发模式下保持展开
-    const isDevMode = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    if (!isDevMode) {
-        jsonToggle.classList.add('collapsed');
-        jsonViewer.classList.add('collapsed');
-    }
-
-    jsonToggle.addEventListener('click', () => {
-        if (!jsonToggle.classList.contains('collapsed')) {
-            resultDiv.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-            jsonToggle.classList.toggle('collapsed');
-            jsonViewer.classList.toggle('collapsed');
-            scrollToTopBtn.classList.remove('visible');
-            scrollToTopBtn.classList.add('hidden');
-        } else {
-            jsonToggle.classList.toggle('collapsed');
-            jsonViewer.classList.toggle('collapsed');
-            // 滚动到JSON预览区域
-            jsonToggle.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-            scrollToTopBtn.classList.add('visible');
-            scrollToTopBtn.classList.remove('hidden');
-        }
-    });
-
-    // Scroll to top button functionality
-    const scrollToTopBtn = document.getElementById('scrollToTop');
-
-    scrollToTopBtn.addEventListener('click', () => {
-        resultDiv.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-    });
 
 });
