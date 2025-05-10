@@ -351,6 +351,19 @@ class ImageParser {
             return {};
         }
 
+        if (params.includes("negative_prompt")) {
+
+            try {
+                return {
+                    model: 'Stable Diffusion',
+                    ...this.parseJsonParameters(params),
+                    rawParameters: params // 保存完整的参数字符串
+                };
+            } catch {
+                return '{}';
+            }
+        }
+
         // 解析常见的 SD 格式
         const positivePrompt = params.split('Negative prompt:')[0].trim();
         const negativePrompt = params.split('Negative prompt:')[1]?.split('Steps:')[0]?.trim() || '';
@@ -386,6 +399,26 @@ class ImageParser {
         }
 
         return result;
+    }
+
+    parseJsonParameters(paramString) {
+
+        try {
+            const data = JSON.parse(paramString || '{}');
+            return {
+                model: data['Model'] || 'Unknown',
+                cfg: data['guidance_scale'] || '',
+                steps: data['num_inference_steps'] || '',
+                seed: data['seed'] || '',
+                sampler: data['sampler'] || '',
+                scheduler: data['scheduler'] || '',
+                positivePrompt: data['prompt'] || '',
+                negativePrompt: data['negative_prompt'] || '',
+            };
+        } catch {
+            return '{}';
+        }
+        return params;
     }
 
     parseParameters(paramString) {
