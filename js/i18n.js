@@ -1,7 +1,7 @@
 export const languages = {
     zh: {
         title: '魔法咒语解析',
-        subtitle: '轻松提取AI生成图片的元数据信息',
+        subtitle: '轻松提取AI生成图片的元数据信息(提示词、画师串、画风串)',
         dropzoneText: '点击上传或将图片拖到页面任意位置',
         dropzoneSubtext: '浏览器本地实现，不会上传到云端',
         globalDropText: '松开鼠标上传图片',
@@ -27,7 +27,7 @@ export const languages = {
     },
     en: {
         title: 'AI Image Spell Parser',
-        subtitle: 'Extract metadata from AI generated images easily',
+        subtitle: 'Extract metadata(prompts, artist tags, style tags) from AI generated images easily',
         dropzoneText: 'Click or drag image to upload',
         dropzoneSubtext: 'Local browser processing, no cloud upload',
         globalDropText: 'Release to upload image',
