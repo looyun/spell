@@ -108,7 +108,27 @@ export const languages = {
 export const defaultLang = 'zh';
 
 export function getCurrentLang() {
-    return localStorage.getItem('language') || defaultLang;
+    // 1. 检查URL参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlLang = urlParams.get('lang');
+    if (urlLang && languages[urlLang]) {
+        return urlLang;
+    }
+
+    // 2. 检查本地存储
+    const storedLang = localStorage.getItem('language');
+    if (storedLang && languages[storedLang]) {
+        return storedLang;
+    }
+
+    // 3. 检查浏览器语言
+    const browserLang = navigator.language.split('-')[0];
+    if (browserLang && languages[browserLang]) {
+        return browserLang;
+    }
+
+    // 4. 默认语言
+    return defaultLang;
 }
 
 export function setLanguage(lang) {
