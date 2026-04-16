@@ -1,6 +1,6 @@
-import TagMatcher from './tagMatcher.js';
-import artistTagsContent from '../assets/artist.txt?raw';
-import characterTagsContent from '../assets/character.txt?raw';
+import TagMatcher from './tag-matcher.js';
+import artistTagsContent from '../assets/data/artist.txt?raw';
+import characterTagsContent from '../assets/data/character.txt?raw';
 
 
 class GlobalMatchers {

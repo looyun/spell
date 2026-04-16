@@ -28,6 +28,8 @@ export function initDragDrop(onFileSelect) {
 
     document.body.addEventListener('dragover', (e) => {
         e.preventDefault();
+        globalDropZone?.classList.add('flex');
+        globalDropZone?.classList.remove('hidden');
         globalDropZone?.classList.add('active');
     });
 

@@ -1,5 +1,5 @@
 import { t } from '../i18n.js';
-import { addToPhotoWall } from './ui.js';
+import { addToPhotoWall } from './components.js';
 import hljs from 'highlight.js';
 
 export function initCopyButtons() {

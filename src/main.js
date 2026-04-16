@@ -1,6 +1,6 @@
 import hljs from 'highlight.js';
-import ImageParser from './parser.js';
-import { globalMatchers } from './matchers.js';
+import ImageParser from './core/parser.js';
+import { globalMatchers } from './core/matchers.js';
 import {
     updateI18n,
     initTheme,
@@ -8,9 +8,9 @@ import {
     initJsonToggle,
     initScrollToTop,
     initPhotoWall
-} from './modules/ui.js';
-import { initDragDrop } from './modules/dragDrop.js';
-import { handleFile, displayMetadata, initCopyButtons } from './modules/display.js';
+} from './ui/components.js';
+import { initDragDrop } from './ui/drag-drop.js';
+import { handleFile, displayMetadata, initCopyButtons } from './ui/display.js';
 
 window.hljs = hljs;
 

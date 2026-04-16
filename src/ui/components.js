@@ -141,16 +141,16 @@ function setupPhotoWallNavigation() {
 export async function initPhotoWall() {
     setupPhotoWallNavigation();
     try {
-        const imageModules = import.meta.glob('../../assets/img_ultracompressed/*.{png,jpg,jpeg}');
+        const imageModules = import.meta.glob('../assets/images/compressed/*.{png,jpg,jpeg}');
         const imageFiles = Object.keys(imageModules)
-            .map(path => path.replace('../../assets/', 'assets/'))
+            .map(path => path.replace('../assets/', 'assets/'))
             .sort((a, b) => a.localeCompare(b));
 
         window.currentPhotoRow = 1;
 
         for (const imgPath of imageFiles) {
             try {
-                const module = await imageModules[`../../${imgPath}`]();
+                const module = await imageModules[`../${imgPath}`]();
                 const imgUrl = module.default;
 
                 await new Promise((resolve) => {
