@@ -65,6 +65,10 @@ html {
     cursor: move;
 }
 
+#result {
+    scroll-margin-top: 24px;
+}
+
 /* 添加平滑动画 */
 .transition-all {
     transition: all 0.3s ease;

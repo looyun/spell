@@ -55,12 +55,25 @@ export function initDragDrop(onFileSelect) {
             }
 
             if (!file) {
-                if (navigator.userAgent.toLowerCase().includes('firefox')) {
+                let url = e.dataTransfer.getData('text/uri-list');
+                if (!url) {
+                    const html = e.dataTransfer.getData('text/html');
+                    const match = html.match(/src=["']([^"']+)["']/);
+                    if (match) url = match[1];
+                }
+
+                if (url) {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const filename = url.split('/').pop() || 'dropped-image.png';
+                    file = new File([blob], filename, { type: blob.type || 'image/png' });
+                } else if (navigator.userAgent.toLowerCase().includes('firefox')) {
                     alert(t('firefox_cross_tab_drag_not_supported'));
                     return;
+                } else {
+                    console.warn('No file found in global drop event', e);
+                    return;
                 }
-                console.warn('No file found in global drop event', e);
-                return;
             }
 
             if (!file.type.startsWith('image/')) {

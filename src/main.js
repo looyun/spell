@@ -30,6 +30,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     initPhotoWall();
+
+    window.addEventListener('photowall:image-click', async (e) => {
+        try {
+            const response = await fetch(e.detail.url);
+            const blob = await response.blob();
+            const filename = e.detail.url.split('/').pop() || 'image.png';
+            const file = new File([blob], filename, { type: blob.type || 'image/png' });
+            processImage(file);
+        } catch (error) {
+            console.error('从照片墙加载图片失败:', error);
+            alert('加载图片失败，请重试');
+        }
+    });
 });
 
 async function processImage(file) {
