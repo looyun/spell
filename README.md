@@ -17,7 +17,6 @@
 本项目使用了以下优秀的开源库和组件：
 
 - [exifreader](https://github.com/mattiasw/exifreader) - 用于读取图片元数据
-- [highlight.js](https://github.com/highlightjs/highlight.js) - 代码高亮显示
 - [Vite](https://github.com/vitejs/vite) - 前端构建工具
 - [gh-pages](https://github.com/tschaub/gh-pages) - GitHub Pages部署
 - [RemixIcon](https://github.com/Remix-Design/remixicon) - 图标库

@@ -1,4 +1,3 @@
-import hljs from 'highlight.js';
 import ImageParser from './core/parser.js';
 import { globalMatchers } from './core/matchers.js';
 import {
@@ -12,7 +11,6 @@ import {
 import { initDragDrop } from './ui/drag-drop.js';
 import { handleFile, displayMetadata, initCopyButtons } from './ui/display.js';
 
-window.hljs = hljs;
 
 document.addEventListener('DOMContentLoaded', async () => {
     initTheme();

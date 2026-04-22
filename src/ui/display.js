@@ -1,6 +1,5 @@
 import { t } from '../i18n.js';
 import { addToPhotoWall } from './components.js';
-import hljs from 'highlight.js';
 
 export function initCopyButtons() {
     document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -155,10 +154,6 @@ export function displayMetadata(metadata, matchers) {
     if (jsonContent) {
         jsonContent.textContent = JSON.stringify(metadata.rawTags, null, 2);
         jsonContent.classList.add('whitespace-pre');
-    }
-
-    if (typeof hljs !== 'undefined') {
-        hljs.highlightAll();
     }
 }
 
