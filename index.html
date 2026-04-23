@@ -27,23 +27,16 @@
     </script>
     <meta name="description" content="解析AI生成的图片元信息，获取生成信息：包括prompt以及其中的画师串或者画风串。Extract generation details from AI-generated image metadata, including prompts, artist tags, and style tags."> 
     <script>
-        // 在页面加载时立即检查主题和语言，避免闪烁
+        // 在页面加载时立即检查主题，避免闪烁
         if (localStorage.getItem('theme') === 'dark' ||
             (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
         }
-        
-        // 设置初始语言
-        import('/spell/assets/i18n-DzuIUF4a.js').then(({ getCurrentLang }) => {
-            const lang = getCurrentLang();
-            document.documentElement.lang = lang;
-            document.getElementById('langSelect').value = lang;
-        });
     </script>
-  <script type="module" crossorigin src="/spell/assets/index-CJo1MDcX.js"></script>
-  <link rel="stylesheet" crossorigin href="/spell/assets/index-B9kVQWFR.css">
+  <script type="module" crossorigin src="/spell/assets/index-D1qcSA2z.js"></script>
+  <link rel="stylesheet" crossorigin href="/spell/assets/index-CPGiArr-.css">
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen relative scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-100 dark:scrollbar-thumb-blue-400 dark:scrollbar-track-gray-800">
@@ -89,8 +82,8 @@
         </div>
     
         <!-- 照片墙区域 -->
-        <div id="photoWall" class="relative flex flex-col p-4 mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group">
-            <div class="flex flex-col h-[400px] overflow-x-auto scrollbar-hide">
+        <div id="photoWall" class="relative flex flex-col p-4 mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden group select-none cursor-grab active:cursor-grabbing">
+            <div id="photoWallScroller" class="flex flex-col h-[400px] overflow-x-auto scrollbar-hide">
                 <div id="photoRow1" class="flex flex-nowrap items-start h-[200px] gap-0 w-full"></div>
                 <div id="photoRow2" class="flex flex-nowrap items-start h-[200px] gap-0 w-full"></div>
             </div>
