@@ -1,4 +1,11 @@
-import ExifReader from 'exifreader';
+let ExifReader = null;
+async function getExifReader() {
+    if (!ExifReader) {
+        const module = await import('exifreader');
+        ExifReader = module.default || module;
+    }
+    return ExifReader;
+}
 import { globalMatchers } from './matchers.js';
 
 class ImageParser {
@@ -9,7 +16,8 @@ class ImageParser {
                 throw new Error('请上传图片文件');
             }
 
-            exif = await ExifReader.load(file);
+            const ER = await getExifReader();
+            exif = await ER.load(file);
             console.log('解析到的EXIF:', exif);
         } catch (error) {
             console.error('解析失败:', error);
@@ -37,10 +45,10 @@ class ImageParser {
             let metadata;
             switch (generator) {
                 case 'NovelAI':
-                    metadata = this.parseNovelAI(exif);
+                    metadata = await this.parseNovelAI(exif);
                     break;
                 case 'ComfyUI':
-                    metadata = this.parseComfyUI(exif);
+                    metadata = await this.parseComfyUI(exif);
                     break;
                 case 'Stable Diffusion':
                     metadata = this.parseStableDiffusion(exif);
@@ -49,7 +57,7 @@ class ImageParser {
                     metadata = this.parseMidjourney(exif);
                     break;
                 case 'Illustrious XL':
-                    metadata = this.parseIllustriousXL(exif);
+                    metadata = await this.parseIllustriousXL(exif);
                     break;
                 default:
                     metadata = this.parseGeneric(exif);
@@ -122,7 +130,7 @@ class ImageParser {
     }
 
     // "{\"checkpoint\": \"Illustrious-XL-v3.0-EPS-stable.safetensors\", \"prompt\": \"A split-color cat with striking green and yellow eyes, peeks out from below a wooden fence, its detailed eyes full of curiosity. The cat's fur is a beautiful blend of white and black, with whiskers twitching slightly as it observes the viewer. Sunlight filters through the trees and plants, casting gentle sun rays and light rays across the scene, creating a serene and picturesque atmosphere. The background is lush with greenery, bushes, and trees, all rendered in anime coloring style. The overall composition is a masterpiece of amazing quality, capturing the essence of a tranquil, sunlit day in a beautifully detailed and vibrant scenery, anime coloring\", \"negativePrompt\": \"worst quality, bad quality, low quality, 3d, light particles, lowres, anatomical nonsense, artistic error, bad anatomy,watermark\", \"width\": 1664, \"height\": 2432, \"seed\": 3445848, \"steps\": 30, \"cfgScale\": 7.5, \"samplerName\": \"euler_ancestral\", \"scheduler\": \"normal\", \"type\": \"AI Generated Image\"}"
-    parseIllustriousXL(exif) {
+    async parseIllustriousXL(exif) {
         try {
             const params = JSON.parse(exif.generate_info?.value || '{}');
             console.log('Illustrious-XL 图片信息:', params);
@@ -135,8 +143,8 @@ class ImageParser {
                 sampler: params.samplerName || '',
                 scheduler: params.scheduler || '',
                 positivePrompt: params.prompt || '',
-                artistMatches: globalMatchers.artistMatcher.findMatches(params.prompt),
-                charaterMatches: globalMatchers.characterMatcher.findMatches(params.prompt),
+                artistMatches: (await globalMatchers.findMatches(params.prompt)).artist,
+                charaterMatches: (await globalMatchers.findMatches(params.prompt)).character,
                 negativePrompt: params.negativePrompt || '',
             };
         } catch (error) {
@@ -145,7 +153,7 @@ class ImageParser {
         }
     }
 
-    parseNovelAI(exif) {
+    async parseNovelAI(exif) {
         try {
             const params = JSON.parse(exif.Comment?.value || '{}');
             console.log('NovelAI 图片信息:', params);
@@ -158,8 +166,8 @@ class ImageParser {
                 sampler: params.sampler || '',
                 scheduler: params.noise_schedule || '',
                 positivePrompt: params.prompt || '',
-                artistMatches: globalMatchers.artistMatcher.findMatches(params.prompt),
-                charaterMatches: globalMatchers.characterMatcher.findMatches(params.prompt),
+                artistMatches: (await globalMatchers.findMatches(params.prompt)).artist,
+                charaterMatches: (await globalMatchers.findMatches(params.prompt)).character,
                 negativePrompt: params.uc || '',
             };
         } catch (error) {
@@ -169,21 +177,21 @@ class ImageParser {
     }
 
     // 修改 parseComfyUI 方法以保存完整 workflow
-    parseComfyUI(exif) {
+    async parseComfyUI(exif) {
 
         try {
             var data = null;
             // parse generation_data
             if (!data && exif.generation_data) {
-                data = this.parseComfyUIGenerationData(exif);
+                data = await this.parseComfyUIGenerationData(exif);
             }
             // parse prompt
             if (!data && exif.prompt) {
-                data = this.parseComfyUIPrompts(exif);
+                data = await this.parseComfyUIPrompts(exif);
             }
             // parse workflow
             if (!data && exif.workflow) {
-                data = this.parseComfyUIWorkflow(exif);
+                data = await this.parseComfyUIWorkflow(exif);
             }
             return data;
         } catch (error) {
@@ -195,7 +203,7 @@ class ImageParser {
     // parse generation_data
     // "generation_data": {
     // "value": "{\"models\":[{\"label\":\"v1\",\"type\":\"LORA\",\"modelId\":\"768486055772084310\",\"modelFileId\":\"768486077245872243\",\"weight\":0.8,\"modelFileName\":\"08f3d7ea-3f73-4b1a-a385-8fb23b3628b6.by_tusi\",\"baseModel\":\"FLUX.1\",\"hash\":\"E0BF2C7F56FE663E054DDD64EB138D65C7F38ADE3BC1A2A980E5002EECB4341D\"},{\"label\":\"109Epoch\",\"type\":\"LORA\",\"modelId\":\"766575899131862285\",\"modelFileId\":\"766575899130813710\",\"weight\":0.3,\"modelFileName\":\"YJ-000109\",\"baseModel\":\"FLUX.1\",\"hash\":\"C15FCA0EAC9B3003D1D38403427108F425DB987313A2950EEC1DF6462DAEE112\"}],\"prompt\":\"depth of field, cowboy shot, (dynamic angle:0.8), (Inception_(film)), solo, girl standing, (playing instrument), (cello), looking down, original, (from side:0.7), (medium chest), white hair, long hair, blunt bangs, hairclip, closed eyes, white pleated dress, long dress, short sleeves, sailor collar, nature, outdoors, lush environment, background filled with dense green foliage, hedge, white flower, lily_(flower) surround, leaves, glowing white butterfly, dapped sunlight, handsome, \",\"width\":1344,\"height\":2048,\"imageCount\":2,\"samplerName\":\"DPM++ 2M SDE Karras\",\"steps\":20,\"cfgScale\":5.5,\"seed\":\"-1\",\"clipSkip\":2,\"baseModel\":{\"label\":\"V4.0\",\"type\":\"BASE_MODEL\",\"modelId\":\"788819169685673178\",\"modelFileId\":\"788819169684624603\",\"modelFileName\":\"FLUX-Anime_v4.0\",\"baseModel\":\"FLUX.1\",\"hash\":\"D85DC0CF4A22CB446A20E0DA3D6748F1DA4282A10811EC9C854AAE911C253B98\"},\"sdVae\":\"Automatic\",\"etaNoiseSeedDelta\":31337,\"sdxl\":{},\"ksamplerName\":\"dpmpp_2m_sde_gpu\",\"schedule\":\"karras\",\"guidance\":5.5}\u0000",
-    parseComfyUIGenerationData(exif) {
+    async parseComfyUIGenerationData(exif) {
         try {
             // fix \u0000 问题
             if (exif.generation_data?.value) {
@@ -215,8 +223,8 @@ class ImageParser {
                 scheduler: data.schedule || '',
                 positivePrompt: positivePrompt,
                 negativePrompt: negativePrompt,
-                artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
-                charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
+                artistMatches: (await globalMatchers.findMatches(positivePrompt)).artist,
+                charaterMatches: (await globalMatchers.findMatches(positivePrompt)).character,
             };
         } catch (error) {
             console.error('解析ComfyUI参数失败:', error);
@@ -224,7 +232,7 @@ class ImageParser {
         }
     }
 
-    parseComfyUIPrompts(exif) {
+    async parseComfyUIPrompts(exif) {
 
         try {
 
@@ -304,8 +312,8 @@ class ImageParser {
                 scheduler: schedulerInput?.scheduler || '',
                 positivePrompt: positivePrompt,
                 negativePrompt: negativePrompt,
-                artistMatches: globalMatchers.artistMatcher.findMatches(positivePrompt),
-                charaterMatches: globalMatchers.characterMatcher.findMatches(positivePrompt),
+                artistMatches: (await globalMatchers.findMatches(positivePrompt)).artist,
+                charaterMatches: (await globalMatchers.findMatches(positivePrompt)).character,
             };
         } catch (error) {
             console.error('解析ComfyUI参数失败:', error);
@@ -333,9 +341,9 @@ class ImageParser {
         return node
     }
 
-    parseComfyUIWorkflow(exif) {
+    async parseComfyUIWorkflow(exif) {
         try {
-            const data = ImageParser.parseWorkflow(exif?.workflow.value || '{}');
+            const data = await ImageParser.parseWorkflow(exif?.workflow.value || '{}');
             return data;
         } catch {
             return '{}';
@@ -567,7 +575,7 @@ class ImageParser {
         return null;
     }
 
-    static parseWorkflow(workflowData) {
+    static async parseWorkflow(workflowData) {
         const workflow = typeof workflowData === 'string' ? JSON.parse(workflowData) : workflowData;
 
         if (!workflow) {

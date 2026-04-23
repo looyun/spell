@@ -282,44 +282,77 @@ function setupPhotoWallNavigation() {
     }
 }
 
-export async function initPhotoWall() {
+export function initPhotoWall() {
     setupPhotoWallNavigation();
-    try {
-        const imageModules = import.meta.glob('../assets/images/compressed/*.{png,jpg,jpeg}');
-        const entries = Object.entries(imageModules)
-            .sort(([a], [b]) => a.localeCompare(b));
 
-        const images = await Promise.all(entries.map(async ([path, loader]) => {
-            const module = await loader();
-            const filename = path.split('/').pop();
-            const meta = imageSizes[filename] || { width: ROW_HEIGHT, height: ROW_HEIGHT, aspectRatio: 1 };
-            return {
-                url: module.default,
-                filename,
-                aspectRatio: meta.aspectRatio
-            };
-        }));
+    // 延迟到浏览器空闲时加载照片墙，避免阻塞首屏关键路径
+    const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+    schedule(async () => {
+        try {
+            const imageModules = import.meta.glob('../assets/images/compressed/*.{png,jpg,jpeg}');
+            const entries = Object.entries(imageModules)
+                .sort(([a], [b]) => a.localeCompare(b));
 
-        const { row1, row2 } = distributeImages(images);
+            // 分批加载图片模块，避免一次性大量并发请求阻塞网络
+            const batchSize = 4;
+            const images = [];
+            for (let i = 0; i < entries.length; i += batchSize) {
+                const batch = entries.slice(i, i + batchSize);
+                const batchResults = await Promise.all(batch.map(async ([path, loader]) => {
+                    const module = await loader();
+                    const filename = path.split('/').pop();
+                    const meta = imageSizes[filename] || { width: ROW_HEIGHT, height: ROW_HEIGHT, aspectRatio: 1 };
+                    return {
+                        url: module.default,
+                        filename,
+                        aspectRatio: meta.aspectRatio
+                    };
+                }));
+                images.push(...batchResults);
 
-        const row1El = document.getElementById('photoRow1');
-        const row2El = document.getElementById('photoRow2');
+                // 让出主线程，避免阻塞用户交互
+                if (i + batchSize < entries.length) {
+                    await new Promise(r => setTimeout(r, 0));
+                }
+            }
 
-        // 阶段一：渲染骨架屏占位
-        for (const img of row1) {
-            const width = img.aspectRatio * ROW_HEIGHT;
-            const item = createPhotoItem(width, img.url, 'Initial image');
-            row1El.appendChild(item);
+            const { row1, row2 } = distributeImages(images);
+
+            const row1El = document.getElementById('photoRow1');
+            const row2El = document.getElementById('photoRow2');
+            if (!row1El || !row2El) return;
+
+            // 使用 DocumentFragment 批量插入，减少重排
+            const frag1 = document.createDocumentFragment();
+            const frag2 = document.createDocumentFragment();
+
+            for (const img of row1) {
+                const width = img.aspectRatio * ROW_HEIGHT;
+                const item = createPhotoItem(width, img.url, 'Initial image');
+                frag1.appendChild(item);
+            }
+            for (const img of row2) {
+                const width = img.aspectRatio * ROW_HEIGHT;
+                const item = createPhotoItem(width, img.url, 'Initial image');
+                frag2.appendChild(item);
+            }
+
+            row1El.appendChild(frag1);
+            row2El.appendChild(frag2);
+
+            // 使用 Intersection Observer 懒加载真实图片
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        loadImageIntoItem(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { root: document.getElementById('photoWallScroller'), rootMargin: '100px' });
+
+            document.querySelectorAll('.photo-item').forEach(item => observer.observe(item));
+        } catch (error) {
+            console.error('初始化照片墙失败:', error);
         }
-        for (const img of row2) {
-            const width = img.aspectRatio * ROW_HEIGHT;
-            const item = createPhotoItem(width, img.url, 'Initial image');
-            row2El.appendChild(item);
-        }
-
-        // 阶段二：加载真实图片（浏览器会复用缓存）
-        document.querySelectorAll('.photo-item').forEach(item => loadImageIntoItem(item));
-    } catch (error) {
-        console.error('初始化照片墙失败:', error);
-    }
+    });
 }
