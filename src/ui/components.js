@@ -1,7 +1,9 @@
 import { t, getCurrentLang, setLanguage } from '../i18n.js';
+import imageSizes from '../assets/data/image-sizes.json';
 
 const GAP = 0;
 const ROW_HEIGHT = 200;
+const DEFAULT_UPLOAD_WIDTH = 200;
 
 export function updateI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -75,20 +77,74 @@ export function initScrollToTop() {
 
 function getRowWidth(row) {
     let width = 0;
-    Array.from(row.children).forEach(img => {
-        const ratio = img.naturalWidth / (img.naturalHeight || 1);
-        width += ratio * ROW_HEIGHT + GAP;
+    Array.from(row.children).forEach(item => {
+        width += (parseFloat(item.dataset.width) || item.offsetWidth || DEFAULT_UPLOAD_WIDTH) + GAP;
     });
     return width;
 }
 
-function appendImageToShorterRow(imgElement) {
+function appendImageToShorterRow(itemElement) {
     const row1 = document.getElementById('photoRow1');
     const row2 = document.getElementById('photoRow2');
     if (!row1 || !row2) return;
 
     const targetRow = getRowWidth(row1) <= getRowWidth(row2) ? row1 : row2;
-    targetRow.appendChild(imgElement);
+    targetRow.appendChild(itemElement);
+}
+
+function createPhotoItem(width, imgUrl, altText = 'Image') {
+    const item = document.createElement('div');
+    item.className = 'photo-item shadow-sm cursor-move';
+    item.style.width = `${width}px`;
+    item.style.height = `${ROW_HEIGHT}px`;
+    item.dataset.width = width;
+    item.dataset.src = imgUrl;
+
+    const skeleton = document.createElement('div');
+    skeleton.className = 'skeleton';
+
+    const img = document.createElement('img');
+    img.className = 'photo-img';
+    img.alt = altText;
+    img.loading = 'lazy';
+    img.draggable = true;
+    img.src = imgUrl;
+
+    img.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/uri-list', imgUrl);
+        e.dataTransfer.effectAllowed = 'copy';
+    });
+
+    img.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('photowall:image-click', { detail: { url: imgUrl } }));
+    });
+
+    item.appendChild(skeleton);
+    item.appendChild(img);
+    return item;
+}
+
+function loadImageIntoItem(item) {
+    const img = item.querySelector('.photo-img');
+    const skeleton = item.querySelector('.skeleton');
+    if (!img) return;
+
+    const onLoad = () => {
+        img.classList.add('loaded');
+        if (skeleton) skeleton.classList.add('hidden');
+    };
+
+    const onError = () => {
+        console.error('Failed to load image:', img.src);
+        if (skeleton) skeleton.classList.add('hidden');
+    };
+
+    if (img.complete && img.naturalWidth > 0) {
+        onLoad();
+    } else {
+        img.addEventListener('load', onLoad, { once: true });
+        img.addEventListener('error', onError, { once: true });
+    }
 }
 
 export function addToPhotoWall(imgSrc, altText = 'Image') {
@@ -96,33 +152,67 @@ export function addToPhotoWall(imgSrc, altText = 'Image') {
     if (window.uploadedImages.has(imgSrc)) return false;
     window.uploadedImages.add(imgSrc);
 
-    const img = new Image();
-    img.src = imgSrc;
-    img.onload = () => {
-        img.alt = altText;
-        img.loading = 'lazy';
-        img.draggable = true;
-        img.className = 'h-full shadow-sm opacity-0 transition-opacity duration-500 ease-out cursor-move';
-        img.style.objectFit = 'contain';
-        img.style.height = `${ROW_HEIGHT}px`;
-        img.style.width = 'auto';
-        img.style.minWidth = '0';
-        img.style.flexShrink = '0';
-
-        img.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/uri-list', imgSrc);
-            e.dataTransfer.effectAllowed = 'copy';
-        });
-
-        img.addEventListener('click', () => {
-            window.dispatchEvent(new CustomEvent('photowall:image-click', { detail: { url: imgSrc } }));
-        });
-
-        appendImageToShorterRow(img);
-        requestAnimationFrame(() => img.classList.remove('opacity-0'));
+    const preload = new Image();
+    preload.src = imgSrc;
+    preload.onload = () => {
+        const ratio = preload.naturalWidth / (preload.naturalHeight || 1);
+        const width = ratio * ROW_HEIGHT;
+        const item = createPhotoItem(width, imgSrc, altText);
+        appendImageToShorterRow(item);
+        loadImageIntoItem(item);
+    };
+    preload.onerror = () => {
+        console.error('Failed to preload uploaded image:', imgSrc);
     };
 
     return true;
+}
+
+function countBits(x) {
+    let count = 0;
+    while (x) {
+        count += x & 1;
+        x >>= 1;
+    }
+    return count;
+}
+
+function distributeImages(images) {
+    const n = images.length;
+    if (n === 0) return { row1: [], row2: [] };
+
+    const total = images.reduce((sum, img) => sum + img.aspectRatio, 0);
+    let bestDiff = Infinity;
+    let bestMask = 0;
+    const targetCount = n / 2;
+
+    for (let mask = 0; mask < (1 << n); mask++) {
+        const c = countBits(mask);
+        if (Math.abs(c - targetCount) > 2) continue;
+
+        let sum1 = 0;
+        for (let i = 0; i < n; i++) {
+            if (mask & (1 << i)) sum1 += images[i].aspectRatio;
+        }
+        const diff = Math.abs(total - 2 * sum1);
+        if (diff < bestDiff) {
+            bestDiff = diff;
+            bestMask = mask;
+        }
+    }
+
+    const row1 = [];
+    const row2 = [];
+    for (let i = 0; i < n; i++) {
+        if (bestMask & (1 << i)) row1.push(images[i]);
+        else row2.push(images[i]);
+    }
+
+    // 错落有致：一行从大到小，另一行从小到大
+    row1.sort((a, b) => b.aspectRatio - a.aspectRatio);
+    row2.sort((a, b) => a.aspectRatio - b.aspectRatio);
+
+    return { row1, row2 };
 }
 
 function setupPhotoWallNavigation() {
@@ -181,11 +271,11 @@ function setupPhotoWallNavigation() {
             scroller.style.cursor = '';
         });
 
-        // 阻止拖拽后触发图片上的 click（如有）
-        wall.querySelectorAll('img').forEach(img => {
-            img.addEventListener('click', (e) => {
-                if (hasDragged) e.preventDefault();
-            });
+        // 阻止拖拽后触发图片上的 click
+        wall.addEventListener('click', (e) => {
+            if (hasDragged && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
         });
     } catch (error) {
         console.error('Photo wall navigation setup failed:', error);
@@ -199,48 +289,36 @@ export async function initPhotoWall() {
         const entries = Object.entries(imageModules)
             .sort(([a], [b]) => a.localeCompare(b));
 
-        window.currentPhotoRow = 1;
+        const images = await Promise.all(entries.map(async ([path, loader]) => {
+            const module = await loader();
+            const filename = path.split('/').pop();
+            const meta = imageSizes[filename] || { width: ROW_HEIGHT, height: ROW_HEIGHT, aspectRatio: 1 };
+            return {
+                url: module.default,
+                filename,
+                aspectRatio: meta.aspectRatio
+            };
+        }));
 
-        for (const [path, loader] of entries) {
-            try {
-                const module = await loader();
-                const imgUrl = module.default;
-                createPhotoWallImage(imgUrl);
-            } catch (error) {
-                console.error('Error loading image:', path, error);
-            }
+        const { row1, row2 } = distributeImages(images);
+
+        const row1El = document.getElementById('photoRow1');
+        const row2El = document.getElementById('photoRow2');
+
+        // 阶段一：渲染骨架屏占位
+        for (const img of row1) {
+            const width = img.aspectRatio * ROW_HEIGHT;
+            const item = createPhotoItem(width, img.url, 'Initial image');
+            row1El.appendChild(item);
+        }
+        for (const img of row2) {
+            const width = img.aspectRatio * ROW_HEIGHT;
+            const item = createPhotoItem(width, img.url, 'Initial image');
+            row2El.appendChild(item);
         }
 
-        function createPhotoWallImage(imgUrl) {
-            const img = new Image();
-            img.src = imgUrl;
-            img.onload = () => {
-                img.alt = 'Initial image';
-                img.loading = 'lazy';
-                img.draggable = true;
-                img.className = 'h-full shadow-sm opacity-0 transition-opacity duration-500 ease-out cursor-move';
-                img.style.objectFit = 'contain';
-                img.style.height = `${ROW_HEIGHT}px`;
-                img.style.width = 'auto';
-                img.style.minWidth = '0';
-                img.style.flexShrink = '0';
-
-                img.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/uri-list', imgUrl);
-                    e.dataTransfer.effectAllowed = 'copy';
-                });
-
-                img.addEventListener('click', () => {
-                    window.dispatchEvent(new CustomEvent('photowall:image-click', { detail: { url: imgUrl } }));
-                });
-
-                appendImageToShorterRow(img);
-                requestAnimationFrame(() => img.classList.remove('opacity-0'));
-            };
-            img.onerror = () => {
-                console.error('Failed to load image:', imgUrl);
-            };
-        }
+        // 阶段二：加载真实图片（浏览器会复用缓存）
+        document.querySelectorAll('.photo-item').forEach(item => loadImageIntoItem(item));
     } catch (error) {
         console.error('初始化照片墙失败:', error);
     }

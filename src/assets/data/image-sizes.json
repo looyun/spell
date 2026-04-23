@@ -1,0 +1,62 @@
+{
+  "a0.png": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": 0.6667
+  },
+  "a1.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  },
+  "a2.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  },
+  "a3.png": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": 0.6667
+  },
+  "a4.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  },
+  "a5.png": {
+    "width": 1248,
+    "height": 1824,
+    "aspectRatio": 0.6842
+  },
+  "a6.png": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": 0.6667
+  },
+  "a7.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  },
+  "a8.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  },
+  "a9.png": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": 0.6667
+  },
+  "b0.png": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": 0.6667
+  },
+  "b2.png": {
+    "width": 1824,
+    "height": 1248,
+    "aspectRatio": 1.4615
+  }
+}
