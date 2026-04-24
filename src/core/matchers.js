@@ -41,6 +41,9 @@ class GlobalMatchers {
                 console.error('Worker error:', err);
             };
 
+            // 发送 base URL 让 worker 开始初始化
+            this.worker.postMessage({ type: 'init', baseUrl: import.meta.env.BASE_URL });
+
             // 等待 worker 初始化完成（最多 30 秒）
             await Promise.race([
                 new Promise((resolve) => {
