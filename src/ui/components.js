@@ -289,7 +289,8 @@ export function initPhotoWall() {
     const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
     schedule(async () => {
         try {
-            const imageModules = import.meta.glob('../assets/images/compressed/*.{png,jpg,jpeg}');
+            // const imageModules = import.meta.glob('../assets/images/compressed/*.{png,jpg,jpeg}');
+            const imageModules = import.meta.glob('../assets/images/webp/*.{png,jpg,jpeg,webp}');
             const entries = Object.entries(imageModules)
                 .sort(([a], [b]) => a.localeCompare(b));
 
@@ -301,7 +302,7 @@ export function initPhotoWall() {
                 const batchResults = await Promise.all(batch.map(async ([path, loader]) => {
                     const module = await loader();
                     const filename = path.split('/').pop();
-                    const meta = imageSizes[filename] || { width: ROW_HEIGHT, height: ROW_HEIGHT, aspectRatio: 1 };
+                    const meta = imageSizes[filename] || imageSizes[filename.replace(/\.webp$/, '.png')] || { width: ROW_HEIGHT, height: ROW_HEIGHT, aspectRatio: 1 };
                     return {
                         url: module.default,
                         filename,
