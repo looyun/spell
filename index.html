@@ -19,10 +19,42 @@
     <title>魔法咒语解析 - NovelAI | ComfyUI | Stable Diffussion | NAI | 画师串 | 画风串 | prompt | artist tags | Artist Style | Exif</title>
     <script type="application/ld+json">
     {
-      "@context" : "https://schema.org",
-      "@type" : "WebSite",
-      "name" : "魔法咒语解析（提示词、画师串、画风串）",
-      "url" : "https://looyun.github.io/spell/"
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "魔法咒语解析（提示词、画师串、画风串）",
+          "url": "https://looyun.github.io/spell/",
+          "description": "解析AI生成的图片元信息，获取生成信息：包括prompt以及其中的画师串或者画风串。Extract generation details from AI-generated image metadata, including prompts, artist tags, and style tags.",
+          "inLanguage": ["zh", "en", "ja", "ko"],
+          "author": {
+            "@type": "Person",
+            "name": "looyun",
+            "url": "https://github.com/looyun"
+          },
+          "license": "https://opensource.org/licenses/MIT"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "魔法咒语解析",
+          "applicationCategory": "UtilityApplication",
+          "operatingSystem": "Any",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "featureList": [
+            "Extract EXIF and PNG metadata from AI-generated images",
+            "Parse prompts, artist tags, and style tags",
+            "Support NovelAI, ComfyUI, Stable Diffusion, WebUI",
+            "Local browser processing, no server upload"
+          ],
+          "softwareVersion": "1.0.0",
+          "url": "https://looyun.github.io/spell/",
+          "codeRepository": "https://github.com/looyun/spell"
+        }
+      ]
     }
     </script>
     <meta name="description" content="解析AI生成的图片元信息，获取生成信息：包括prompt以及其中的画师串或者画风串。Extract generation details from AI-generated image metadata, including prompts, artist tags, and style tags."> 

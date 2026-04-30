@@ -1,0 +1,79 @@
+# AI Visibility Optimizer - Conservative Strategy
+# Blocks AI training crawlers, allows search crawlers
+
+# ============================================
+# BLOCK: AI Training Crawlers
+# These collect data for model training
+# ============================================
+
+# OpenAI training crawler
+User-agent: GPTBot
+Disallow: /
+
+# Anthropic training crawler
+User-agent: ClaudeBot
+Disallow: /
+
+# Google AI training
+User-agent: Google-Extended
+Disallow: /
+
+# Common Crawl (training data)
+User-agent: CCBot
+Disallow: /
+
+# Meta/Facebook crawler
+User-agent: FacebookBot
+Disallow: /
+
+# ============================================
+# ALLOW: AI Search Crawlers
+# These only use content for real-time search
+# ============================================
+
+# OpenAI search (ChatGPT)
+User-agent: OAI-SearchBot
+Disallow:
+
+# Anthropic search (Claude)
+User-agent: Claude-SearchBot
+Disallow:
+
+# Perplexity AI search
+User-agent: Perplexity-User
+Disallow:
+
+# Perplexity indexing
+User-agent: PerplexityBot
+Disallow:
+
+# Google search
+User-agent: Googlebot
+Disallow:
+
+# Bing search (Copilot, DuckDuckGo, Yahoo)
+User-agent: Bingbot
+Disallow:
+
+# ============================================
+# OPTIONAL: Additional blocked crawlers
+# Uncomment if you want to block these too
+# ============================================
+
+# Bytedance/TikTok
+# User-agent: Bytespider
+# Disallow: /
+
+# Image search crawler
+# User-agent: ImagesiftBot
+# Disallow: /
+
+# Academic/AI research
+# User-agent: OmigiliBot
+# Disallow: /
+
+# ============================================
+# Sitemap
+# ============================================
+
+Sitemap: https://looyun.github.io/spell/sitemap.xml

@@ -1,0 +1,44 @@
+# 魔法咒语解析
+
+## Description
+
+魔法咒语解析（Spell Parser）是一个免费开源的网页工具，用于提取和解析 AI 生成图片的元数据信息。支持 NovelAI、ComfyUI、Stable Diffusion、WebUI 等主流 AI 绘画工具生成的图片。
+
+用户只需拖拽或上传图片，即可在浏览器本地解析出：
+- 正向提示词（Positive Prompt）与反向提示词（Negative Prompt）
+- 画师串（Artist Tags）与画风串（Style Tags）
+- 生成模型、采样器、CFG、Steps、Seed 等参数
+- 完整的 EXIF / PNG 元数据 JSON 预览
+
+所有解析均在浏览器本地完成，图片不会上传到任何服务器，保障用户隐私。
+
+## Author
+
+- GitHub: [looyun](https://github.com/looyun)
+- 项目仓库: [looyun/spell](https://github.com/looyun/spell)
+
+## Site Structure
+
+### 首页
+- [魔法咒语解析](https://looyun.github.io/spell/) — 主页面，支持拖拽上传图片并解析元数据
+
+### 数据文件
+- [Character Tags](https://looyun.github.io/spell/data/character.txt) — 角色标签字典
+- [Artist Tags](https://looyun.github.io/spell/data/artist.txt) — 画师标签字典
+
+## Content Categories
+
+- AI 绘画工具：NovelAI、ComfyUI、Stable Diffusion (WebUI/Forge)、NAI
+- 元数据解析：EXIF、PNG Chunk、ComfyUI Workflow、WebUI Parameters
+- 提示词提取：Prompt、Negative Prompt、Artist Tags、Style Tags
+- 隐私保护：纯浏览器本地处理，无服务器上传
+
+## Related Sites
+
+- [NovelAI](https://novelai.net) — AI 故事创作与图像生成平台
+- [Stable Diffusion](https://stability.ai) — 开源 AI 图像生成模型
+- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) — 基于节点的 Stable Diffusion 图形界面
+
+## License
+
+MIT License
